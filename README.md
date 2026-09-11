@@ -1,676 +1,203 @@
-# homebridge http advanced accessory
+# HTTP Advanced Accessory
 
-Homebridge plugin that can turn virtually any device which exposes HTTP APIs into an HomeKit-compatible Service.
-Its purpose is to connect any device that can be controlled via HTTP command to Homekit. It creates a Homebridge accessory which uses HTTP calls to *change* and *check* its state via [Actions](#actions).
+Bridge HTTP-controlled devices into HomeKit using Homebridge. Configure a service, its getter/setter URLs, and optional response transformations. The Alpha adds a shared background state cache, bounded HTTP scheduling, and an optional dynamic platform.
 
-This plugin is a fork of HttpAccessory and has merged many features (mainly mappers) from the [homebridge-http-securitysystem](<https://www.npmjs.com/package/homebridge-http-securitysystem>).
+**2.0.0-alpha.1 is a development prerelease candidate. Public release is gated by the validation checklist in [the implementation report](docs/implementation-report.md).** Stable users remain on 1.3.0 until they explicitly opt in. Existing `HttpAdvancedAccessory` configurations remain supported without rewriting them on the supported runtime matrix.
 
-## Installation
+## Runtime requirements
 
-1. Install homebridge using: npm install -g homebridge
-2. Install this plugin using: npm install -g homebridge-http-advanced-accessory
-3. Update your configuration file. See sample-config.json in this repository for a sample. 
+- Node.js 22.13 or later in the 22.x line, or Node.js 24.x.
+- Homebridge 1.11.4 or later in the 1.x line, or Homebridge 2.4 or later in the 2.x line.
+- Older Node/Homebridge versions continue to use plugin 1.3.0. Upgrade Homebridge's runtime before testing this Alpha.
 
-## Features
+The package uses TypeScript compiled to ESM and the HAP API supplied by Homebridge. It does not load or bundle a second HAP runtime. The tested versions and remaining validation are recorded in [the report](docs/implementation-report.md).
 
-The main function of the module is to proxy HomeKit queries to an arbitrary web API to retrieve and set the status of the accessory. Main features include:
+## Existing accessory configuration
 
-- Configurable HTTP endpoints to use for getting/setting the state, including passing parameters in for of GET or in POST body
-- Support for basic HTTP authentication
-- Configurable mapping of API response data to HomeKit Accessory status to allow custom responses
-- Configurable mapping of url and body request data to HomeKit Accessory status to allow custom requests
-- Interval polling of the current state to enable real-time notifications even if the Accessory has been enabled without the use of HomeKit
-
-## Configuration
-
-Configuration sample:
-
- ```json
- {
-    "bridge": {
-        "name": "Homebridge",
-        "username": "C1:38:5A:AC:39:30",
-        "port": 51826,
-        "pin": "123-45-678"
-    },
-    "description": "This is an example configuration for the Everything Homebridge plugin",
-    "accessories": [
-        {
-            "accessory": "HttpAdvancedAccessory",
-            "service": "ContactSensor",
-            "name": "Terrace Sensor",
-            "forceRefreshDelay": 5,
-            "username": "admin",
-            "password": "admin",
-            "debug" : false,
-            "optionCharacteristic" :[],
-            "urls":{
-               "getContactSensorState": {
-                  "url" : "http://remoteserver/xml/zones/zonesStatus48IP.xml",
-                  "mappers" : [
-                      {
-                          "type": "xpath",
-                          "parameters": {
-                              "xpath": "//status[1]/text()"
-                          }
-                      },
-                      {
-                          "type": "static",
-                          "parameters": {
-                              "mapping": {
-                                  "ALARM": "1",
-                                  "NORMAL":"0"
-                              }
-                          }
-                     }
-                  ]
-               }
-            }
-         },
-         {
-         "accessory": "HttpAdvancedAccessory",
-         "service": "SecuritySystem",
-         "name": "Btcino Security",
-         "forceRefreshDelay": 5,
-         "username": "admin",
-         "password": "admin",
-         "debug" : false,
-         "setterDelay" : 1000,
-         "urls":{
-            "getSecuritySystemTargetState": {
-               "url" : "http://remoteserver/xml/state/virtualKeypad.xml",
-               "mappers" : [
-                   { "type": "xpath",  "parameters": { "xpath": "//generic/text()" } },
-                   { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-               ]
-            },
-            "getSecuritySystemCurrentState": {
-               "url" : "http://remoteserver/xml/partitions/partitionsStatus48IP.xml", 
-               "mappers" : [
-                  { "type": "regex",  "parameters": { "regexp" : "(ALARM)",    "capture": "1" } },
-                  { "type": "regex",  "parameters": { "regexp" : ">(ARMED)",   "capture": "1" } },
-                  { "type": "regex",  "parameters": { "regexp" : "(DISARMED)", "capture": "1" } },
-                  { "type": "static", "parameters": { "mapping": { "ALARM": "4", "ARMED":"inconclusive", "DISARMED": "3"} } }
-               ],
-               "inconclusive" : {
-                  "url" : "http://remoteserver/xml/state/virtualKeypad.xml", 
-                  "mappers" : [
-                      { "type": "xpath",  "parameters": { "xpath": "//generic/text()" } },
-                      { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-                  ]
-               }
-            },
-            "setSecuritySystemTargetState": {
-               "url" : "http://remoteserver/xml/cmd/cmdOk.xml?cmd=setMacro&macroId={value}&redirectPage=/xml/cmd/cmdError.xml",
-               "mappers" : [
-                   { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-               ]
-            }
-         }
-         }
-    ],
-
-    "platforms": []
-}
-```
-
-- The **name** parameter determines the name of the accessory you will see in HomeKit.
-- The **service** parameter determines the kind of Service\Accessory you will see in HomeKit.
-- The **username/password** configuration can be used to specify the username and password if the remote webserver requires HTTP authentication.
-- A **debug** turns on debug messages. The important bit is that it reports the mapping process so that it's easier to debug.
-- The **optionCharacteristic** is an array of optional Characteristics of the service that you want to expose to HomeKit. The full list of mandatory and optional Characteristics types that HomeKit supports are exposed as a separate subclass in [HomeKitTypes](https://github.com/homebridge/HAP-NodeJS/blob/master/src/lib/gen/HomeKit.ts).
-- The **urls section** configures the URLs that are to be called on certain events. It contains a key-value map of actions that can be executed. The key is name of the action and the value is a configuration JSON object for that action. See the [Actions](#actions) section below.
-- The **polling** is a boolean that specifies if the current state should be pulled on regular intervals or not. Defaults to false.
-- **forceRefreshDelay** is a number which defines the poll interval in seconds. Defaults to 0.
-- **setterDelay** is a number which defines the number of milliseconds to wait before executing a "set" action request. If more than one request is received during this interval, only the last one is executed. Defaults to 0 - disabled.
-- **uriCallsDelay** number of milliseconds to add a short delay between URI calls for devices that can't handle many URI calls at the same time. Defaults to 0 - disabled.
-
-## Actions
-
-The action is a key-value map that configures the URLs to be called to perform a read or a write on a particular Characteristic. In fact, there are two kind of actions, getters and setters: actions for getter keys begin with word "get", actions for the setters begin with "set".
-So the key name is composed of two parts:
-
-- The kind of action: "get" or "set"
-- The name of the HomeKit Characteristics for that Service. All known built-in Service and Characteristic types that HomeKit supports are exposed as a separate subclass in [HomeKitTypes](https://github.com/homebridge/HAP-NodeJS/blob/master/src/lib/gen/HomeKit.ts).
-
-For example, to get the value of the SecuritySystemTargetState Characteristic, the key value would be "getSecuritySystemTargetState"—while to set it, "setSecuritySystemTargetState"
-
-### Getter Action
-
-The value object has the following JSON format for a **getter** action:
-
-```json
-"getTargetTemperature" : {
-    "url":"http://",
-    "httpMethod":"",
-    "body" : "",
-    "mappers" : [],
-    "inconclusive" : {
-        "url":"",
-        "httpMethods":"",
-        "mappers": [],
-        "inconclusive":{}
-    }
-}
-```
-
-Where:
-
-- The **url** parameter is the url to be called for that action.
-- The **httpMethod** (OPTIONAL) parameter is one of "GET" or "POST". Defaults to "GET".
-- The **body** (OPTIONAL) parameter is the body of the HTTP POST call.
-- The **mappers** (OPTIONAL) are a chain of blocks that have the purpose to parse the response received, see [Mapping](#mapping)
-- The **inconclusive** (OPTIONAL) parameter is another action that will be invoked if the result of the previous mapping chain is the word "inconclusive"
-- The **resultOnError** (OPTIONAL) parameter, if specified, will be result if the HTTP request encounters an error. This is helpful for HTTP health checks, where failure to connect can be mapped to a (valid) failing value rather than passed through as an error.
-
-### Setter Action
-
-The value object has the following JSON format for a **setter** action:
-
-```json
-"setTargetTemperature" : {
-    "url":"http://remoteserver/setTemperature?stemp={value}",
-    "httpMethod":"",
-    "body" : "{value}",
-    "mappers" : []
-}
-```
-
-Where:
-
-- The **url** parameter is the URL to be called for that action. If the string contains the "{value}" placeholder, it will be replaced by the value that HomeKit wants to set, after being changed parsed by mappers. The url can also be a string template, see [URL Template](#url-template)
-- The **httpMethod** (OPTIONAL) parameter is one of "GET" or "POST". Defaults to "GET".
-- The **body** (OPTIONAL) parameter is the body of the HTTP POST call.
-- The **mappers** (OPTIONAL) are a chain of blocks that have the purpose of changing the value that HomeKit wants to set to something that is valid for your device, see [Mapping](#mapping)
-
-### URL Template
-
-The URL can be a [string template](<http://exploringjs.com/es6/ch_template-literals.html>) so you can use expressions like *$(state.getCurrentTemperature)* that will be replaced by the current value of the Characteristic CurrentTemperature.
-The *state* variable contains all the values of the Characteristics of the Service, plus the *value* variable contains the value HK wants to set for the Characteristic being set.
-For example, suppose that when setting the Active state of a HeatingCooling system it also needs to set the TargetTemperature in Fahrenheit—you may have something like this:
-
-```json
-"setActive" : {
-    "url":"http://remoteserver/setActive?${value}&stemp=${state.getTargetTemperature * 9/5 +32}"
-}
-```
-
-
-
-### Mapping
-
-The mappings block of the configuration may contain any number of mapper definitions. The mappers are chained after each other—the result of a mapper is fed into the input of the next mapper. The purpose of this whole chain is to somehow boil down the response received from the API to a single value which is expected by HomeKit.
-
-Each mapper has the following JSON format:
+Keep existing entries in `accessories[]`, including their names and service definitions:
 
 ```json
 {
-    "type": "<type of the mapper>",
-    "parameters": { <parameters to be passed to the mapper> }
+  "accessory": "HttpAdvancedAccessory",
+  "name": "Example Switch",
+  "service": "Switch",
+  "urls": {
+    "getOn": { "url": "http://device.example/state" },
+    "setOn": { "url": "http://device.example/set/{value}" }
+  }
 }
 ```
 
-There are 3 kinds of mappers implemented at the moment.
+Keep your Homebridge storage, bridge identity and accessory names when upgrading. The legacy registration name, service ordering and characteristic identities are preserved; tests reuse HAP's identifier cache across replacement instances. This ordinary upgrade is separate from moving a device to platform configuration.
 
-#### Static mapper
+## Optional platform configuration
 
-The static mapper can be used to define a key => value dictionary. It will simply look up the input in the dictionary and if it is found, it returns the corresponding value. It's great for mapping string responses like "ARMED" to their actual number. 
-
-Configuration is as follows:
+New installations can use one `HttpAdvanced` entry in `platforms[]`:
 
 ```json
 {
-    "type": "static",
-    "parameters": { 
-        "mapping": {
-            "STAY": "0",
-            "AWAY": "1",
-            "whataever you don't like": "whatever you like more"
-        }
-    }
-}
-```
-
-This configuration would map STAY to 0, AWAY to 1 and "whatever you don't like" to "whatever you like more". If the mapping does not have an entry which corresponds to input, it returns the full input. 
-
-#### Regexp mapper
-
-The regexp mapper can be used to define a regular expression to run on the input, capture some substring of it and return it. It's great for mapping string responses which may change around but have a certain part that's always there and which is the part you are interested in. 
-
-Configuration is as follows:
-
-```json
-{
-    "type": "regex",
-    "parameters": {
-        "regexp": "^The system is currently (ARMED|DISARMED), yo!$",
-        "capture": "1"
-    }
-}
-```
-
-This configuration will run the regular expression defined by the ***regexp*** parameter against the input and return the first capture group (as defined by ***capture***). So, in this case, if the input is "The system is currenty ARMED, yo!", the mapper will map this to "ARMED".
-
-If the regexp does not match the input, the mapper returns the full input. 
-
-#### XPath mapper
-
-The XPath mapper can be used to extract data from an XML document. It allows the definition of an XPath which will then be applied to the input and returns whatever the query selects. 
-
-When using this mapper, make sure that you select text elements and not entire nodes or node lists, otherwise it will fail horribly.
-
-Configuration is as follows:
-
-```json
-{
-    "type": "xpath",
-    "parameters": {
-        "xpath": "//partition[3]/text()",
-        "index": 0
-    }
-}
-```
-
-Let's assume this mapper gets the following input:
-
-```xml
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<partitionsStatus>
-    <partition>ARMED</partition>
-    <partition>ARMED</partition>
-    <partition>ARMED_IMMEDIATE</partition>
-</partitionsStatus>
-```
-
-In this case this mapper will return "ARMED_IMMEDIATE". The ***index*** parameter can be used to specify which element to return if the xpath selects multiple elements. In the example above it is completely redundant as partition[3] already makes sure that a single partition is selected.
-
-#### JSONPath mapper
-
-The JSONPath mapper can be used to extract data from a JSON object. See https://www.npmjs.com/package/JSONPath#syntax-through-examples for syntax and more examples.
-
-When using this mapper, make sure that you select text elements or arrays and not entire objects.
-
-Configuration is as follows:
-
-```json
-{
-    "type": "jpath",
-    "parameters": {
-        "jpath": "$.partitionsStatus.partition[2]",
-        "index": 0
-    }
-}
-```
-
-Let's assume this mapper gets the following input:
-
-```json
-{
-    "partitionsStatus": {
-        "partition": [
-            "ARMED",
-            "ARMED",
-            "ARMED_IMMEDIATE",
-        ]
-    }
-}
-```
-
-In this case this mapper will return "ARMED_IMMEDIATE". The ***index*** parameter can be used to specify which element to return if the JSONPath selects multiple elements. In the example above it is completely redundant as partition[2] already makes sure that a single partition is selected.
-
-#### Eval mapper
-
-The eval mapper can be used to run any JavaScript code, which will be interpreted when the event is called. Use `value` to use the set/read value in your code.
-
-Configuration is as follows:
-
-```json
-{
-    "type": "eval",
-    "parameters": {
-        "expression": "value === \"OK\" ? 1 : 0"
-    }
-}
-```
-
-In this example, if the mapper receives the string `OK` it will return `1`, for anything else it will return `0`.  
-Be careful with the code you write, this mapper can be very flexible but it can also blow up quite easily.
-
-## Supported services
-
-AccessoryInformation
-AirQualitySensor
-BatteryService 
-BridgeConfiguration
-BridgingState
-CameraControl
-CameraRTPStreamManagement
-CarbonDioxideSensor
-CarbonMonoxideSensor
-ContactSensor
-Door
-Doorbell
-Fan
-GarageDoorOpener
-HumiditySensor
-LeakSensor
-LightSensor
-Lightbulb
-LockManagement
-LockMechanism
-Microphone
-MotionSensor
-OccupancySensor
-Outlet
-Pairing
-ProtocolInformation
-Relay
-SecuritySystem
-SmokeSensor
-Speaker
-StatefulProgrammableSwitch
-StatelessProgrammableSwitch
-Switch
-TemperatureSensor
-Thermostat
-TimeInformation
-TunneledBTLEAccessoryService
-Window
-WindowCovering  
-
-## Configuration Examples
-
-The purpose of this section is collect as many configuration examples as possible.
-
-### Bticino "Nuovo antifurto filare"
-
-This first example is to configure a Bticino (BT-4200, 4201, 4202) as a HomeKit SecuritySystem
-
-```json
+  "platform": "HttpAdvanced",
+  "name": "HTTP Advanced",
+  "coordinator": { "concurrency": 4, "perOrigin": 2, "maxQueue": 256 },
+  "devices": [
     {
-        "accessory": "HttpAdvancedAccessory",
-        "service": "SecuritySystem",
-        "name": "Btcino Security",
-        "forceRefreshDelay": 5,
-        "username": "admin",
-        "password": "admin",
-        "debug" : false,
-        "urls":{
-            "getSecuritySystemTargetState": {
-                "url" : "http://remoteserver/xml/state/virtualKeypad.xml",
-                "mappers" : [
-                    { "type": "xpath",  "parameters": { "xpath": "//generic/text()" } },
-                    { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-                ]
-            },
-            "getSecuritySystemCurrentState": {
-                "url" : "http://remoteserver/xml/partitions/partitionsStatus48IP.xml",
-                "mappers" : [
-                    { "type": "regex",  "parameters": { "regexp" : "(ALARM)",    "capture": "1" } },
-                    { "type": "regex",  "parameters": { "regexp" : ">(ARMED)",   "capture": "1" } },
-                    { "type": "regex",  "parameters": { "regexp" : "(DISARMED)", "capture": "1" } },
-                    { "type": "static", "parameters": { "mapping": { "ALARM": "4", "ARMED":"inconclusive", "DISARMED": "3"} } }
-                ],
-                "inconclusive" : {
-                    "url" : "http://remoteserver/xml/state/virtualKeypad.xml", 
-                    "mappers" : [
-                        { "type": "xpath",  "parameters": { "xpath": "//generic/text()" } },
-                        { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-                    ]
-                }
-            },
-            "setSecuritySystemTargetState": {
-                "url" : "http://remoteserver/xml/cmd/cmdOk.xml?cmd=setMacro&macroId={value}&redirectPage=/xml/cmd/cmdError.xml",
-                "mappers" : [
-                    { "type": "static", "parameters": { "mapping": { "0": "3", "1": "1", "2": "2", "3": "0" } } }
-                ]
-            }
-        }
+      "id": "example-switch",
+      "name": "Example Switch",
+      "service": "Switch",
+      "refresh": { "activeInterval": 5, "idleInterval": 60, "idleAfter": 60 },
+      "urls": {
+        "getOn": { "url": "http://device.example/state" },
+        "setOn": { "url": "http://device.example/set/{value}" }
+      }
     }
-```
-
-### Bticino "Nuovo antifurto filare" Zones as ContactSensor
-
-```json
-{
-    "accessory": "HttpAdvancedAccessory",
-    "service": "ContactSensor",
-    "name": "Terrace Sensor",
-    "forceRefreshDelay": 5,
-    "username": "admin",
-    "password": "admin",
-    "debug" : false,
-    "urls":{
-        "getContactSensorState": {
-            "url" : "http://remoteserver/xml/zones/zonesStatus48IP.xml",
-            "mappers" : [
-                {
-                    "type": "xpath",
-                    "parameters": {
-                        "xpath": "//status[1]/text()"
-                    }
-                },
-                {
-                    "type": "static",
-                    "parameters": {
-                        "mapping": {
-                            "ALARM": "1",
-                            "NORMAL":"0"
-                        }
-                    }
-                }
-            ]
-        }
-    }
+  ]
 }
 ```
 
-### Daikin as HeaterCooler
+The platform restores cached accessories and removes obsolete ones only after successful inventory validation. Set a permanent `id` before pairing if you want to rename the device later. Otherwise its initial name is its identity. Keep the platform name stable. Invalid or duplicate inventories preserve cached accessories and report an error.
 
-This is still incomplete but the unofficial [Daikin documentation](https://github.com/ael-code/daikin-control) can help you to complete it.
+Legacy and platform definitions can coexist for **different devices**. Do not define the same device in both places: voluntary conversion uses different accessory UUIDs and may require rebuilding HomeKit assignments. There is no automatic migration tool. See [migration and rollback](docs/migration.md).
 
-```json
-{
-    "accessory": "HttpAdvancedAccessory",
-    "service": "HeaterCooler",
-    "name": "Condizionatore Soggiorno",
-    "forceRefreshDelay": 5,
-    "debug" : false,
-    "urls":{
-        "getCurrentHeaterCoolerState": {
-            "url" : "http://192.168.x.x/aircon/get_control_info",
-            "mappers" : [
-                {"type": "regex", "parameters": {"regexp": "(pow=0)","capture": "1"} },
-                {"type": "regex", "parameters": { "regexp": "mode=(\\d)", "capture": "1"} },
-                {"type": "static", "parameters": { "mapping": { "pow=0": "0", "3":"3", "4":"2"} } }
-            ]
-        },
-        "getTargetHeaterCoolerState":{
-            "url" : "http://192.168.x.x/aircon/get_control_info", 
-            "mappers" : [
-                {"type": "regex", "parameters": {"regexp": "(pow=0)","capture": "1"} },
-                {"type": "regex", "parameters": { "regexp": "mode=(\\d)", "capture": "1"} },
-                {"type": "static", "parameters": { "mapping": { "pow=0": "0", "3":"3", "4":"2", "0":"3", "1":"3", "7":"3", "2":"3"} } }
-            ]
-        },
-        "setTargetHeaterCoolerState":{
-            "url" : "http://192.168.x.x/aircon/set_control_info/{value}",
-            "mappers" : [
-                {"type": "static", "parameters": { "mapping": { "0": "?mode=0", "1":"?mode=4", "2":"?mode=3"} } }
-            ]
-        },
-        "getActive":{
-            "url" : "http://192.168.x.x/aircon/get_control_info", 
-            "mappers" : [
-                {"type": "regex", "parameters": {"regexp": "pow=(\\d)","capture": "1"} }
-            ]
-        },
-        "setActive":{
-            "url" : "http://192.168.x.x/aircon/set_control_info/{value}",
-            "mappers" : [
-                {"type": "static", "parameters": { "mapping": { "0": "?pow=0", "1":"?pow=1"} } }
-            ]
-        }
+The schema provides platform settings. Arbitrary action-name maps, mapper parameters, property overrides and recursive fallback definitions remain available in Homebridge's JSON editor. Do not use the platform form to replace existing legacy blocks. The plugin never writes `config.json`.
 
-    }
-}
+## How reads and freshness work
 
-```
+HomeKit GETs read memory immediately. They do not wait for HTTP, retries, a queue, or another device. Unknown state returns HomeKit's communication error until the first usable refresh; an existing last-known value is returned while refreshing or recovering from failure.
 
-### Yamaha Musiccast WX-010 as Switch
+A single scheduler serves both adapters. Default bounds are four total requests, two per origin, and 256 waiting requests. GETs for the same action never overlap. Overdue actions are serviced before recently refreshed ones, and eligible origins rotate. SETs have queue priority. Connections are reused.
 
-```json
-{
-    "accessory": "HttpAdvancedAccessory",
-    "service": "Switch",
-    "name": "Bedroom speaker",
-    "forceRefreshDelay": 5,
-    "debug" : false,
-    "urls":{
-        "getOn":{
-            "url" : "http://192.168.x.x/YamahaExtendedControl/v1/main/getStatus",
-            "mappers" : [
-                {
-                    "type": "jpath",
-                    "parameters": {
-                        "jpath": "$..power",
-                        "index": "0"
-                    }
-                },
-                {
-                    "type": "static",
-                    "parameters": {
-                        "mapping": {
-                            "on": "1",
-                            "standby": "0"
-                        }
-                    }
-                }
-            ]
-        },
-        "setOn":{
-            "url" : "http://192.168.x.x/YamahaExtendedControl/v1/main/setPower?power=${value==1?\"on\":\"standby\"}"
-        }
+| Setting | Unit | Behavior |
+|---|---|---|
+| `forceRefreshDelay` | seconds | Positive values retain explicit polling intervals; default 0 selects adaptive refresh. |
+| `refresh.activeInterval` | seconds | Default 5 after startup and while reads are active. |
+| `refresh.idleAfter` | seconds | Default 60 without a HomeKit read before switching to idle cadence. |
+| `refresh.idleInterval` | seconds | Default 60 for idle devices. |
+| `setterDelay` | milliseconds | Default 0. Positive values acknowledge immediately and debounce each characteristic; last write wins. |
+| `uriCallsDelay` | milliseconds | Default 0. Minimum spacing between this device's request starts, including GETs, SETs and fallbacks. |
 
-    }
-}
+Intervals run after request completion, with up to 10% positive jitter. Startup acquisition is spread across the first second. Explicit polling is not shortened by HomeKit reads. With adaptive refresh, a stale read makes work eligible for a later scheduler tick (100 ms resolution); it still returns memory state. Errors back off exponentially up to five minutes plus jitter. Error fallback values also back off, so a working `resultOnError` cannot create a retry storm.
 
-```
+This changes the acquisition timing of `forceRefreshDelay: 0`: old versions fetched on demand, while Alpha learns state ahead of reads. It introduces bounded background traffic and finite staleness. Measure both freshness and load for your devices; very slow fleets can exceed the nominal interval. A 500-second configured interval still allows approximately 500 seconds of staleness. No cache promises mathematically instantaneous remote state.
 
-### Generic Web API as Lightbulb
+Successful reads update HAP using `updateValue`, never a setter. Last successful values and timestamps are stored under Homebridge's persistence directory and restored only for an identical configuration fingerprint. Cache files contain values and hashes, not action URLs or credentials. A missing/corrupt cache is ignored. Persistence is periodic and at graceful shutdown; a crash can lose recent cache updates.
+
+## Actions and HTTP
+
+Action keys combine `get` or `set` with a characteristic name, such as `getOn`, `setBrightness`, or `getSecuritySystemTargetState`. Canonical HAP names are resolved by UUID; historical compact display names remain accepted.
+
+Each action supports:
+
+- `url`: HTTP or HTTPS endpoint.
+- `httpMethod`: defaults to `GET`; legacy POST bodies and GET bodies are supported.
+- `body`: string, sent without implicit JSON/form serialization.
+- `headers`: optional explicit headers, including Content-Type if your endpoint requires one.
+- `mappers`: ordered transformation chain.
+- `resultOnError`: getter value returned on transport failure, bypassing mappers. Zero, false and empty string are valid fallbacks.
+- `inconclusive`: another getter action when the mapped result is the string `"inconclusive"`. Up to 32 actions are allowed; cycles are rejected.
+- `timeout`: total milliseconds including queueing, response body and redirects; default 10000.
+- `strictHTTP`: default false. True treats non-2xx responses as errors.
+
+For compatibility, non-2xx response bodies are mapped by default, as in 1.3.0. Status errors are counted separately in diagnostics. Enable `strictHTTP` to make these responses fail and use `resultOnError`. GET/HEAD redirects are followed (up to ten); each hop goes through the coordinator. Credentials and cookies are removed on cross-origin redirects. POST redirects are not automatically followed, matching legacy defaults. Responses are limited to 8 MiB to bound memory use.
+
+Set `username` and `password` on a device for Basic Auth. Supplied credentials are sent immediately, including when legacy `immediately: false` is present: 1.3.0's explicit Authorization header already overrode that setting. Alpha preserves that behavior. Without credentials, Alpha omits the old empty `Basic Og==` header. Credentials embedded in a URL are also handled by Node's HTTP client. Use HTTPS for sensitive endpoints.
+
+## SETs and templates
+
+SETs apply mappers to the outgoing HomeKit value, expand templates, and send the request. A normal SET resolves after the HTTP operation; failures surface as a HomeKit error. `setterDelay` retains legacy immediate acknowledgement, so a later failure can only be logged and the cached value restored. Successful writes make an authoritative getter verification eligible immediately. Older in-flight GETs cannot overwrite the result of a newer SET.
+
+`{value}` (case-insensitive) substitutes the **mapped** value. Legacy JavaScript template expressions see the original `value` and characteristic `state`:
 
 ```json
 {
-    "accessory": "HttpAdvancedAccessory",
-    "service": "Lightbulb",
-    "name": "Pool Light",
-    "manufacturer": "Custom",
-    "model": "Virtual Device",
-    "debug": false,
-    "optionCharacteristic": [
-        "Hue",
-        "Saturation",
-        "Brightness"
-    ],
-    "urls": {
-        "setOn": {
-            "httpMethod": "POST",
-            "body": "%7B%22c%22%3A%22pool%20i%20{value}%22%7D",
-            "url": "http://127.0.0.1/control.php",
-            "mappers": [
-                {
-                    "type": "static",
-                    "parameters": {
-                        "mapping": {
-                            "true": "on",
-                            "false": "off"
-                        }
-                    }
-                }
-            ]
-        },
-        "getOn": {
-            "httpMethod": "POST",
-            "body": "%7B%22c%22%3A%22update%20pool-on%22%7D",
-            "url": "http://127.0.0.1/control.php",
-            "mappers": [
-                {
-                    "type": "jpath",
-                    "parameters": {
-                        "jpath": "$.u",
-                        "index": 0
-                    }
-                }
-            ]
-        },
-        "setHue": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22pool%20hue%20{value}%22%7D",
-            "mappers": []
-        },
-        "getHue": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22value%20pool-h%22%7D",
-            "mappers": [
-                {
-                    "type": "jpath",
-                    "parameters": {
-                        "jpath": "$.u",
-                        "index": 0
-                    }
-                }
-            ]
-        },
-        "setSaturation": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22pool%20saturation%20{value}%22%7D",
-            "mappers": []
-        },
-        "getSaturation": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22value%20pool-s%22%7D",
-            "mappers": [
-                {
-                    "type": "jpath",
-                    "parameters": {
-                        "jpath": "$.u",
-                        "index": 0
-                    }
-                }
-            ]
-        },
-        "setBrightness": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22pool%20brightness%20{value}%22%7D",
-            "mappers": []
-        },
-        "getBrightness": {
-            "httpMethod": "POST",
-            "url": "http://127.0.0.1/control.php",
-            "body": "%7B%22c%22%3A%22value%20pool-b%22%7D",
-            "mappers": [
-                {
-                    "type": "jpath",
-                    "parameters": {
-                        "jpath": "$.u",
-                        "index": 0
-                    }
-                }
-            ]
-        }
-    }
+  "url": "http://device.example/set/${value}?mapped={value}",
+  "httpMethod": "POST",
+  "body": "temperature=${state.getTargetTemperature * 9/5 + 32}"
 }
 ```
 
-## Plugin Development
+Expressions are available in setter URLs and bodies. Getter URLs/bodies remain literal, matching 1.3.0. `state.getOn`, `state.getTargetTemperature`, etc. retain the legacy mapper-output types; polling converts numeric characteristics as before.
 
-To aid in testing and developing this plugin further I have provided a sample homebridge config. This will allow you to spin a homebridge instance for development that has this plugin already installed.  
-Install homebridge, checkout this repo and run: 
+## Mappers
+
+A chain feeds each mapper's output into the next. Getter mappers consume response text; setter mappers consume the outgoing HomeKit value.
+
+| Type | Parameters | Semantics |
+|---|---|---|
+| `static` | `mapping` object | Lookup by input value; unmatched values pass through. Legacy falsey mapped values (`0`, `false`, `""`) also pass through. Use strings `"0"`/`"1"` for numeric state or an eval expression for an intentional falsey result. |
+| `regex` | `regexp`, `capture` (default `"1"`) | Return the selected capture, or original input when unmatched. |
+| `xpath` | `xpath`, `index` (default 0) | XPath text-node selection or string expression. Select `/text()` or `string(...)`, not entire elements. |
+| `jpath` | `jpath`, `index` (default 0) | JSONPath selection, indexed result, objects/arrays serialized as JSON. Malformed or non-object JSON returns `"inconclusive"`. |
+| `eval` | `expression` | Execute the legacy JavaScript expression with `value`, `self.state`, and `this.state`. |
+
+```json
+[
+  { "type": "jpath", "parameters": { "jpath": "$.u", "index": 0 } },
+  { "type": "static", "parameters": { "mapping": { "0": "0", "1": "1", "unset": "0" } } }
+]
+```
+
+**Eval and `${...}` templates execute trusted configuration as JavaScript with the privileges of Homebridge. They are not sandboxed.** Do not paste untrusted expressions. Evaluation is isolated in the compatibility module and exceptions are contained; a deliberately nonterminating expression can still block Node. JSONPath uses the maintained library's safe filter evaluator; exotic executable legacy JSONPath scripts need individual compatibility verification.
+
+Malformed XML, invalid values, expression failures and exhausted numeric/boolean `inconclusive` results produce contained action failures. They cannot leave a getter callback waiting indefinitely. Numeric HAP formats are converted deliberately; unsupported values are rejected rather than cached as valid state.
+
+## Services, optional characteristics and props
+
+`service` uses the Homebridge HAP service name. `BatteryService` aliases `Battery`. Removed historical HAP services produce an explicit unsupported-service error; consult [the service inventory](docs/service-support.md). The old `HomeKitExtensionTypes.js` was never loaded by the plugin entry point and did not provide a working configuration feature.
+
+`optionCharacteristic` selects optional characteristics in HAP's original service order. `props` overrides properties by canonical or legacy compact name:
+
+```json
+{
+  "service": "Lightbulb",
+  "optionCharacteristic": ["Brightness", "Hue", "Saturation"],
+  "props": { "Brightness": { "minValue": 0, "maxValue": 100, "minStep": 1 } }
+}
+```
+
+The legacy adapter retains the fixed Manufacturer, Model and SerialNumber values exposed by 1.3.0; its previously ignored `manufacturer`/`model` keys remain accepted. The platform honors these metadata settings. All historical extended examples (security system, contact sensor, Daikin, Yamaha and lightbulb) remain in [the legacy reference](docs/legacy-reference.md).
+
+## Alpha installation and rollback
+
+Once the Alpha tag has been published, explicitly select it in Homebridge UI or run in your Homebridge installation environment:
+
 ```sh
-$ homebridge --debug --user-storage-path .homebridge-dev --plugin-path ./ 
+npm install -g homebridge-http-advanced-accessory@alpha
 ```
+
+Back up Homebridge before testing. Restart Homebridge after installing. Leave existing legacy configuration and Homebridge storage unchanged. For an unpublished local candidate, install the reviewed tarball on a separate test instance first.
+
+To roll back to the verified stable baseline:
+
+```sh
+npm install -g homebridge-http-advanced-accessory@1.3.0
+```
+
+Restart Homebridge. Platform definitions are Alpha-only: remove them and restore the backed-up legacy configuration if you had explicitly migrated. Do not delete Homebridge pairing or identifier storage during an ordinary plugin rollback.
+
+## Troubleshooting and diagnostics
+
+Set `debug: true` on one device to log a shared diagnostic snapshot every 30 seconds. It reports queue depth/high-water mark, concurrency, sampled request durations, cache ages, failure categories, next eligible refresh times and state-change counts. URLs, credentials, bodies, values and raw exception messages are omitted. Diagnostics are local; nothing is sent externally.
+
+- Unknown startup state: wait for initial acquisition; check endpoint reachability and mapper output.
+- Old values: inspect cache age, explicit refresh interval, queue depth and backoff before increasing concurrency.
+- Slow writes: inspect backend latency and `setterDelay`/`uriCallsDelay`.
+- Configuration error: inspect service names, action shapes and mapper syntax. Failed devices are isolated; invalid platform inventory is not reconciled destructively.
+- Unexpected mapper result: remember legacy static falsey behavior and JSONPath object serialization.
+
+Use [the measurement guide](docs/performance.md) to compare bulk-read latency and freshness. Include plugin/Homebridge/Node versions and sanitized diagnostics in reports, never your unredacted configuration.
+
+## Development and release policy
+
+```sh
+npm ci
+npm run check
+HB_TEST_VERSION=1 npm test
+npm run benchmark -- --save
+npm pack --dry-run
+```
+
+CI exercises Node 22/24 and real Homebridge v1/v2 HAP implementations. Unit/integration tests use only loopback fake servers. `legacy-plugin` is a test-only alias of published 1.3.0; its obsolete dependencies are excluded from production installation and the tarball. `npm audit --omit=dev` audits the maintained runtime separately.
+
+The first release must use `npm publish --tag alpha` and a GitHub prerelease. `publishConfig.tag` and the publish guard prevent accidental use of `latest`. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely one working household fixture.
+
+The existing Apache-2.0 LICENSE remains unchanged. Package metadata is reconciled to that file, which has existed since the initial commit; historical authorship is retained and the current maintainer is credited.

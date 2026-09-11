@@ -1,0 +1,28 @@
+{
+  "measuredAt": "2026-09-10T19:26:45.788Z",
+  "scope": "Synthetic loopback backend and real HAP serialization; not a live Home Control measurement",
+  "node": "v24.21.0",
+  "homebridge": "2",
+  "syntheticBackendDelayMS": 50,
+  "devices": 44,
+  "baselineOnDemandDevices": 41,
+  "baselineBulkMS": 2146.368166,
+  "baselineGetterRequests": 41,
+  "alphaBulkMS": 3.0880830000005517,
+  "alphaGetterRequestsFromBulk": 0,
+  "refreshSweepMS": 2249.3705419999997,
+  "cacheAgeMS": {
+    "median": 1121,
+    "p95": 2090,
+    "max": 2189
+  },
+  "requestDurationMS": {
+    "median": 102,
+    "p95": 104,
+    "max": 108
+  },
+  "queueHighWater": 42,
+  "maxConcurrency": 2,
+  "completed": 44,
+  "failures": 0
+}

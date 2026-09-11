@@ -1,0 +1,2249 @@
+[
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 01",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=1&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=1&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "forceRefreshDelay": 0,
+    "name": "Fixture Switch 02",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=2&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=2&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 03",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=3&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=3&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 04",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=4&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=4&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 05",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=5&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=5&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 06",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=6&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=6&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 07",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=7&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=7&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 08",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=8&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=8&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 09",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=9&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=9&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 10",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=10&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=10&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "forceRefreshDelay": 500,
+    "name": "Fixture Switch 11",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=11&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=11&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "forceRefreshDelay": 500,
+    "name": "Fixture Switch 12",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=12&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=12&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 13",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=13&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=13&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 14",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=14&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=14&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 15",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=15&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=15&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 16",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=16&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=16&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 17",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=17&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=17&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 18",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=18&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=18&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 19",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=19&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=19&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 20",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=20&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=20&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 21",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=21&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=21&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 22",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=22&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=22&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 23",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=23&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=23&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 24",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=24&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=24&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 25",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=25&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=25&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 26",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=26&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=26&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 27",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=27&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=27&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 28",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=28&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "unlock",
+                "false": "lock"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=28&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 29",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=29&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=29&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 30",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=30&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=30&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 31",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=31&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=31&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 32",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=32&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=32&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 33",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=33&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=33&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 34",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=34&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=34&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 35",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=35&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=35&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 36",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=36&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=36&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 37",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=37&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=37&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 38",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=38&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=38&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 39",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=39&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=39&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 40",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=40&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=40&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 41",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=41&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=41&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 42",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Virtual Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=42&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=42&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "name": "Fixture Switch 43",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=43&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=43&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "accessory": "HttpAdvancedAccessory",
+    "service": "Switch",
+    "debug": false,
+    "forceRefreshDelay": 500,
+    "name": "Fixture Switch 44",
+    "manufacturer": "Fixture Manufacturer",
+    "model": "Physical Fixture",
+    "urls": {
+      "setOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=44&command={value}",
+        "mappers": [
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "true": "on",
+                "false": "off"
+              }
+            }
+          }
+        ]
+      },
+      "getOn": {
+        "url": "http://127.0.0.1:18080/control.php",
+        "httpMethod": "POST",
+        "body": "device=44&command=read",
+        "mappers": [
+          {
+            "type": "jpath",
+            "parameters": {
+              "jpath": "$.u",
+              "index": 0
+            }
+          },
+          {
+            "type": "static",
+            "parameters": {
+              "mapping": {
+                "0": "0",
+                "1": "1",
+                "unhandled": "0",
+                "unset": "0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,221 @@
+{
+  "pluginAlias": "HttpAdvanced",
+  "pluginType": "platform",
+  "singular": true,
+  "strictValidation": false,
+  "schema": {
+    "type": "object",
+    "required": [
+      "name",
+      "devices"
+    ],
+    "additionalProperties": true,
+    "definitions": {
+      "action": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "HTTP(S) URL; setter supports legacy templates and {value}"
+          },
+          "httpMethod": {
+            "type": "string",
+            "default": "GET"
+          },
+          "body": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "mappers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "type",
+                "parameters"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "static",
+                    "regex",
+                    "xpath",
+                    "jpath",
+                    "eval"
+                  ]
+                },
+                "parameters": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Mapper-specific mapping, regexp/capture, xpath/index, jpath/index, or expression. See README."
+                }
+              }
+            }
+          },
+          "resultOnError": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "timeout": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 10000,
+            "description": "Total request timeout in milliseconds, including queue and redirects"
+          },
+          "strictHTTP": {
+            "type": "boolean",
+            "default": false
+          },
+          "inconclusive": {
+            "$ref": "#/definitions/action"
+          }
+        }
+      }
+    },
+    "properties": {
+      "name": {
+        "type": "string",
+        "default": "HTTP Advanced"
+      },
+      "platform": {
+        "type": "string",
+        "default": "HttpAdvanced"
+      },
+      "coordinator": {
+        "type": "object",
+        "properties": {
+          "concurrency": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 4
+          },
+          "perOrigin": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 2
+          },
+          "maxQueue": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 256
+          }
+        }
+      },
+      "devices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "service"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Stable platform identity; set before pairing"
+            },
+            "name": {
+              "type": "string"
+            },
+            "service": {
+              "type": "string",
+              "default": "Switch"
+            },
+            "manufacturer": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string",
+              "format": "password"
+            },
+            "immediately": {
+              "type": "boolean",
+              "default": true
+            },
+            "debug": {
+              "type": "boolean",
+              "default": false
+            },
+            "optionCharacteristic": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "props": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "forceRefreshDelay": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Legacy polling interval in seconds; 0 selects adaptive refresh"
+            },
+            "setterDelay": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Legacy debounce in milliseconds"
+            },
+            "uriCallsDelay": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Minimum milliseconds between request starts for this device"
+            },
+            "refresh": {
+              "type": "object",
+              "properties": {
+                "activeInterval": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "default": 5
+                },
+                "idleInterval": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "default": 60
+                },
+                "idleAfter": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "default": 60
+                }
+              },
+              "description": "All intervals are in seconds"
+            },
+            "urls": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/action"
+              },
+              "description": "Action-name map. Keep advanced recursive actions in the Homebridge JSON editor."
+            }
+          }
+        }
+      }
+    }
+  }
+}

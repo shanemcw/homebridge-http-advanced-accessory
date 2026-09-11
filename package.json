@@ -1,33 +1,69 @@
 {
   "displayName": "HTTP Advanced Accessory",
   "name": "homebridge-http-advanced-accessory",
-  "version": "1.3.0",
-  "description": "http plugin for homebridge: https://github.com/nfarina/homebridge",
-  "license": "ISC",
+  "version": "2.0.0-alpha.1",
+  "description": "HTTP-backed HomeKit accessories with a shared background state cache and legacy configuration support",
+  "license": "Apache-2.0",
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "supports-hap",
+    "http",
+    "homekit",
+    "cache"
   ],
   "engines": {
-    "node": ">=0.12.0",
-    "homebridge": ">=0.4.0"
+    "node": "^22.13.0 || ^24.0.0",
+    "homebridge": "^1.11.4 || ^2.4.0"
   },
   "author": "tasict",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/staromeste/homebridge-http-advanced-accessory"
+    "url": "git+https://github.com/shanemcw/homebridge-http-advanced-accessory.git"
   },
   "dependencies": {
-    "JSONPath": "^0.11.2",
-    "polling-to-event": ">=2.0.2",
-    "request": "^2.65.0",
-    "xmldom": "^0.1.27",
-    "xpath": "0.0.24"
+    "@xmldom/xmldom": "^0.9.12",
+    "jsonpath-plus": "^10.4.0",
+    "xpath": "0.0.34"
   },
-  "homepage": "https://github.com/staromeste/homebridge-http-advanced-accessory#readme",
+  "homepage": "https://github.com/shanemcw/homebridge-http-advanced-accessory#readme",
   "devDependencies": {
-    "jest": "^23.6.0"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.10.0",
+    "homebridge": "^2.4.0",
+    "homebridge-v1": "npm:homebridge@^1.11.4",
+    "legacy-plugin": "npm:homebridge-http-advanced-accessory@1.3.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
   },
   "scripts": {
-    "test": "jest"
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test scripts --max-warnings=0",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "benchmark": "npm run build && node scripts/benchmark.mjs",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run check && node scripts/release-guard.mjs"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "config.schema.json",
+    "README.md",
+    "LICENSE",
+    "docs",
+    "sample-config.json"
+  ],
+  "bugs": {
+    "url": "https://github.com/shanemcw/homebridge-http-advanced-accessory/issues"
+  },
+  "contributors": [
+    "Shane McWhorter"
+  ],
+  "publishConfig": {
+    "tag": "alpha"
   }
 }
