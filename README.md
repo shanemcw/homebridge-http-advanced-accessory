@@ -198,6 +198,6 @@ npm pack --dry-run
 
 CI exercises Node 22/24 and real Homebridge v1/v2 HAP implementations. Unit/integration tests use only loopback fake servers. `legacy-plugin` is a test-only alias of published 1.3.0; its obsolete dependencies are excluded from production installation and the tarball. `npm audit --omit=dev` audits the maintained runtime separately.
 
-The first release must use `npm publish --tag alpha` and a GitHub prerelease. `publishConfig.tag` and the publish guard prevent accidental use of `latest`. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely one working household fixture.
+The first release must use `npm publish --tag alpha` and a GitHub prerelease. `publishConfig.tag` and the publish guard prevent accidental use of `latest`. No automatic publishing workflow is enabled. Stable requires broader device, restart and field evidence, not merely synthetic fixtures.
 
 The existing Apache-2.0 LICENSE remains unchanged. Package metadata is reconciled to that file, which has existed since the initial commit; historical authorship is retained and the current maintainer is credited.

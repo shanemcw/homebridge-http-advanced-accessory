@@ -37,13 +37,13 @@ Current official references checked during implementation:
 
 Repository, homepage and issue metadata point to the maintained repository. Original author metadata remains; the maintainer is credited as a contributor. The LICENSE has been Apache-2.0 since initial commit `b7f0d4c`; only the contradictory package metadata was reconciled. The LICENSE and historical notices are unchanged. This does not relicense the project.
 
-The package allowlist includes built runtime, schema, documentation and sample configuration. Tests, old runtime sources, the planning brief, household configuration, logs, credentials and node_modules are excluded. The UI schema preserves advanced JSON configuration; visual Homebridge UI verification remains outstanding.
+The package allowlist includes built runtime, schema, documentation and sample configuration. Tests, old runtime sources, local configuration, logs, credentials and node_modules are excluded. The UI schema preserves advanced JSON configuration; visual Homebridge UI verification remains outstanding.
 
 ## Measurements
 
 The reproducible synthetic benchmark uses a serialized 50 ms loopback backend and real HAP serialization. The 41 legacy on-demand entries took about 2146 ms and caused 41 HTTP reads. The warmed Alpha serialized all 44 entries in about 3.1 ms with zero new getter requests. The independent 44-device sweep took about 2249 ms; median cache age at the end was 1121 ms, p95 2090 ms and max 2189 ms. Maximum concurrency was two, queue high-water 42, and there were no request failures. See `benchmark-results.json` for the exact recorded run.
 
-The owner supplied eight newly instrumented live baseline HTTP-request timings: median 4.5 seconds, seven samples between 4.3 and 5.2 seconds, and one 0.03-second result. These are a different environment and workload from the synthetic benchmark. No live Alpha improvement has yet been measured. See `performance.md` for the instrumentation boundary and recent-snapshot caveat.
+Field performance remains to be measured on comparable stable and Alpha installations. The synthetic benchmark establishes repeatable scheduler and serialization behavior but is not evidence of field latency or freshness improvement.
 
 ## Validation checkpoint
 
@@ -57,7 +57,7 @@ The final local matrix and remote CI results are recorded below when complete. R
 - Review the final npm tarball, package version and alpha-only publication guard.
 - Exercise Homebridge UI configuration visually and test a real restart/restore cycle on the Alpha installation.
 - Verify existing Apple Home pairing, rooms/scenes/automations and accessory identity on that installation.
-- Measure the unchanged Home Control reader against the Alpha; compare its new `took` metric with the supplied baseline and separately measure end-to-end orchestration.
+- Measure field `/accessories` latency on the same host before and after Alpha; keep orchestration outside the plugin as a separate measurement.
 - Measure sustained cache age and backend request rate; approve cadence based on freshness, not snapshot speed alone.
 - Confirm the planned npm/GitHub prerelease publication after these checks; publish only with `--tag alpha`, mark GitHub prerelease and verify `latest` remains 1.3.0.
 
