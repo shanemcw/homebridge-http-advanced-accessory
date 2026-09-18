@@ -78,12 +78,57 @@ test('uriCallsDelay spaces actual request starts independently of response arriv
   }finally{clearTimeout(guard);}
 });
 
-test('cross-origin GET redirects release queue slots and strip credentials',async t=>{
-  const target=await fakeServer(t);
-  const source=await fakeServer(t,(_req,res)=>{res.statusCode=302;res.setHeader('Location',target.url);res.end();});
+test('cross-origin redirects release queue slots and strip all configured headers and credentials',async t=>{
+  const target=await fakeServer(t,(req,res)=>{
+    if(req.url==='/landing'){res.statusCode=307;res.setHeader('Location','/final');res.end();return;}
+    res.end('1');
+  });
+  const source=await fakeServer(t,(_req,res)=>{res.statusCode=302;res.setHeader('Location',target.url+'/landing');res.end();});
   const {transport}=harness(t,{concurrency:1,perOrigin:1});
-  assert.equal((await transport.request({url:source.url},{username:'fixture',password:'fixture'},'a')).body,'1');
-  assert.equal(target.requests[0].headers.authorization,undefined);
+  for(const method of ['GET','HEAD']){
+    for(const credential of ['device','header','url']){
+      const headers={'X-API-Key':'fixture-key','X-Trace':'fixture-trace',CoOkIe:'fixture-cookie'};
+      if(credential==='header')headers.aUtHoRiZaTiOn='Bearer fixture-token';
+      const url=new URL(source.url);
+      if(credential==='url'){url.username='fixture';url.password='fixture';}
+      const action={url:url.href,httpMethod:method,headers};
+      const config=credential==='device'?{username:'fixture',password:'fixture'}:{};
+      const original=JSON.stringify({action,config});
+      const offset=target.requests.length;
+      assert.equal((await transport.request(action,config,'a')).body,method==='HEAD'?'':'1');
+      assert.ok(source.requests.at(-1).headers.authorization);
+      assert.equal(source.requests.at(-1).headers['x-api-key'],'fixture-key');
+      const redirected=target.requests.slice(offset);
+      assert.equal(redirected.length,2);
+      for(const request of redirected){
+        for(const name of ['authorization','cookie','x-api-key','x-trace'])assert.equal(request.headers[name],undefined,name);
+        assert.equal(request.headers.host,new URL(target.url).host);
+      }
+      assert.equal(JSON.stringify({action,config}),original);
+    }
+  }
+});
+
+test('same-origin redirects retain configured headers and credentials',async t=>{
+  const server=await fakeServer(t,(req,res)=>{
+    if(req.url==='/start'){res.statusCode=302;res.setHeader('Location','/target');res.end();return;}
+    res.end('1');
+  });
+  const {transport}=harness(t);
+  for(const method of ['GET','HEAD']){
+    for(const explicitAuth of [false,true]){
+      const headers={'X-API-Key':'fixture-key','X-Trace':'fixture-trace',Cookie:'fixture-cookie'};
+      if(explicitAuth)headers.aUtHoRiZaTiOn='Bearer fixture-token';
+      const action={url:server.url+'/start',httpMethod:method,headers};
+      assert.equal((await transport.request(action,{username:'fixture',password:'fixture'},'a')).body,method==='HEAD'?'':'1');
+      const request=server.requests.at(-1);
+      assert.equal(request.url,'/target');
+      assert.equal(request.headers['x-api-key'],'fixture-key');
+      assert.equal(request.headers['x-trace'],'fixture-trace');
+      assert.equal(request.headers.cookie,'fixture-cookie');
+      assert.equal(request.headers.authorization,explicitAuth?'Bearer fixture-token':'Basic Zml4dHVyZTpmaXh0dXJl');
+    }
+  }
 });
 
 test('background timeout starts at admission, while writes retain their total queue deadline', async t => {
