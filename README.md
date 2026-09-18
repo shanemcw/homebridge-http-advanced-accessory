@@ -97,7 +97,7 @@ Each action supports:
 - `timeout`: total milliseconds including queueing, response body and redirects; default 10000.
 - `strictHTTP`: default false. True treats non-2xx responses as errors.
 
-For compatibility, non-2xx response bodies are mapped by default, as in 1.3.0. Status errors are counted separately in diagnostics. Enable `strictHTTP` to make these responses fail and use `resultOnError`. GET/HEAD redirects are followed (up to ten); each hop goes through the coordinator. Credentials and cookies are removed on cross-origin redirects. POST redirects are not automatically followed, matching legacy defaults. Responses are limited to 8 MiB to bound memory use.
+For compatibility, non-2xx response bodies are mapped by default, as in 1.3.0. Status errors are counted separately in diagnostics. Enable `strictHTTP` to make these responses fail and use `resultOnError`. GET/HEAD redirects are followed (up to ten); each hop goes through the coordinator. Configured request headers and credentials are not forwarded on cross-origin redirects; same-origin redirects retain them. POST redirects are not automatically followed, matching legacy defaults. Responses are limited to 8 MiB to bound memory use.
 
 Set `username` and `password` on a device for Basic Auth. Supplied credentials are sent immediately, including when legacy `immediately: false` is present: 1.3.0's explicit Authorization header already overrode that setting. Alpha preserves that behavior. Without credentials, Alpha omits the old empty `Basic Og==` header. Credentials embedded in a URL are also handled by Node's HTTP client. Use HTTPS for sensitive endpoints.
 
