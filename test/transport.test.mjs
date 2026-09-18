@@ -78,12 +78,28 @@ test('uriCallsDelay spaces actual request starts independently of response arriv
   }finally{clearTimeout(guard);}
 });
 
-test('cross-origin GET redirects release queue slots and strip credentials',async t=>{
+test('cross-origin GET redirects release queue slots and strip configured headers and credentials',async t=>{
   const target=await fakeServer(t);
   const source=await fakeServer(t,(_req,res)=>{res.statusCode=302;res.setHeader('Location',target.url);res.end();});
   const {transport}=harness(t,{concurrency:1,perOrigin:1});
-  assert.equal((await transport.request({url:source.url},{username:'fixture',password:'fixture'},'a')).body,'1');
+  const action={url:source.url,headers:{'X-API-Key':'fixture-key','X-Trace':'fixture-trace'}};
+  assert.equal((await transport.request(action,{username:'fixture',password:'fixture'},'a')).body,'1');
   assert.equal(target.requests[0].headers.authorization,undefined);
+  assert.equal(target.requests[0].headers['x-api-key'],undefined);
+  assert.equal(target.requests[0].headers['x-trace'],undefined);
+});
+
+test('same-origin GET redirects retain configured headers and credentials',async t=>{
+  let server;
+  server=await fakeServer(t,(req,res)=>{
+    if(req.url==='/start'){res.statusCode=302;res.setHeader('Location',server.url+'/target');res.end();return;}
+    res.end('1');
+  });
+  const {transport}=harness(t);
+  const action={url:server.url+'/start',headers:{'X-Trace':'fixture-trace'}};
+  assert.equal((await transport.request(action,{username:'fixture',password:'fixture'},'a')).body,'1');
+  assert.equal(server.requests[1].headers['x-trace'],'fixture-trace');
+  assert.equal(server.requests[1].headers.authorization,'Basic Zml4dHVyZTpmaXh0dXJl');
 });
 
 test('background timeout starts at admission, while writes retain their total queue deadline', async t => {

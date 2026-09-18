@@ -53,12 +53,9 @@ export class Transport {
     if ([301, 302, 303, 307, 308].includes(result.status) && result.location && ['GET', 'HEAD'].includes(method)) {
       let next: URL;
       try { next = new URL(result.location, url); } catch { throw new ActionError('http'); }
-      const headers = { ...action.headers };
+      const headers = next.origin === url.origin ? { ...action.headers } : {};
       let nextConfig = config;
-      if (next.origin !== url.origin) {
-        for (const key of Object.keys(headers)) if (['authorization', 'cookie', 'host'].includes(key.toLowerCase())) delete headers[key];
-        nextConfig = { ...config, username: '', password: '' };
-      }
+      if (next.origin !== url.origin) nextConfig = { ...config, username: '', password: '' };
       return this.request({ ...action, url: next.href, headers }, nextConfig, owner, priority, depth + 1, deadline);
     }
     if (result.status < 200 || result.status >= 300) {
