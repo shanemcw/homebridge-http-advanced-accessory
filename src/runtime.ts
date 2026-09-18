@@ -62,7 +62,7 @@ export class Runtime {
   start(): void {
     if (this.started || this.stopped) return;
     this.started = true;
-    this.log.info(`HTTP Advanced 2.0.0-alpha.1: ${this.owners.size} devices, ${this.entries.size} cached getters, ${this.stats.restored} restored; concurrency ${this.coordinator.limits.concurrency}/${this.coordinator.limits.perOrigin}`);
+    this.log.info(`HTTP Advanced: ${this.owners.size} devices, ${this.entries.size} cached getters, ${this.stats.restored} restored; concurrency ${this.coordinator.limits.concurrency}/${this.coordinator.limits.perOrigin}`);
     this.timer = setInterval(() => this.tick(), 100);
     this.timer.unref();
     this.persistenceTimer = setInterval(() => { this.persist(); this.debugSnapshot(); }, 30000);
