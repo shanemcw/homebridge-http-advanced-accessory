@@ -1,6 +1,6 @@
 # Alpha implementation and release checkpoint
 
-Status: implemented; local matrix, package smoke test and runtime audit pass. Remote CI and field validation remain release gates. This is not a declaration that the public Alpha release is complete.
+Status: implemented; local matrix, remote CI, package smoke test and runtime audit pass. Field validation remains a release gate. This is not a declaration that the public Alpha release is complete.
 
 ## Baseline and architecture
 
@@ -37,7 +37,7 @@ Current official references checked during implementation:
 
 Repository, homepage and issue metadata point to the maintained repository. Original author metadata remains; the maintainer is credited as a contributor. The LICENSE has been Apache-2.0 since initial commit `b7f0d4c`; only the contradictory package metadata was reconciled. The LICENSE and historical notices are unchanged. This does not relicense the project.
 
-The package allowlist includes built runtime, schema, documentation and sample configuration. Tests, old runtime sources, local configuration, logs, credentials and node_modules are excluded. The UI schema preserves advanced JSON configuration; visual Homebridge UI verification remains outstanding.
+The package allowlist includes the built runtime, schema, README, sample configuration, migration guide, performance guide, service inventory and legacy reference. The draft release notes, benchmark result artifact and this implementation checkpoint remain repository-only release evidence. Tests, old runtime sources, local configuration, logs, credentials and node_modules are excluded. The UI schema preserves advanced JSON configuration; visual Homebridge UI verification remains outstanding.
 
 ## Measurements
 
@@ -49,7 +49,7 @@ Field performance remains to be measured on comparable stable and Alpha installa
 
 The automated suite covers published behavior, all five mapper types, templates, GET/POST/GET-body transport, auth, status handling, fallback recursion, timeout/abort, queue bounds, pacing/fairness, persistence, debouncing, stale-read races, HAP identity, real plugin loading, schema, platform restoration/removal and the 44-device workload.
 
-The final local matrix and remote CI results are recorded below when complete. Runtime dependency audit currently reports zero known vulnerabilities. Development audit includes intentionally vulnerable historical packages from the 1.3.0 regression baseline; none are runtime dependencies.
+The local matrix and remote CI have passed the current candidate behavior. The final cleanup commit must pass the same matrix before release. Runtime dependency audit currently reports zero known vulnerabilities. Development audit includes intentionally vulnerable historical packages from the 1.3.0 regression baseline; none are runtime dependencies.
 
 ## Remaining release gates
 
@@ -65,4 +65,4 @@ Do not publish stable 2.0.0 or move `latest`. The first Alpha is not complete un
 
 ### Local final matrix
 
-Node 22.23.2 and Node 24.21.0 each run the suite against Homebridge 1.11.4 and 2.4.0. The four combinations pass 44 tests each (176 executions), including the actual ESM plugin loader. Typecheck, lint and whitespace checks pass. The 45-file package was inspected and installed under an isolated temporary directory with production dependencies only. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its dependency tree. Remote CI is recorded with the review branch.
+Node 22.23.2 and Node 24.21.0 each run the suite against Homebridge 1.11.4 and 2.4.0. The four combinations pass the full suite, including the actual ESM plugin loader and redirect security coverage. Typecheck, lint and whitespace checks pass. The 45-file package was inspected and installed under an isolated temporary directory with production dependencies only. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its dependency tree. Remote CI is recorded with the review branch.

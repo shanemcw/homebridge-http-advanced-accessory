@@ -2,7 +2,7 @@
 
 Bridge HTTP-controlled devices into HomeKit using Homebridge. Configure a service, its getter/setter URLs, and optional response transformations. The Alpha adds a shared background state cache, bounded HTTP scheduling, and an optional dynamic platform.
 
-**2.0.0-alpha.1 is a development prerelease candidate. Public release is gated by the validation checklist in [the implementation report](docs/implementation-report.md).** Stable users remain on 1.3.0 until they explicitly opt in. Existing `HttpAdvancedAccessory` configurations remain supported without rewriting them on the supported runtime matrix.
+**2.0.0-alpha.1 is a development prerelease candidate.** Stable users remain on 1.3.0 until they explicitly opt in. Existing `HttpAdvancedAccessory` configurations remain supported without rewriting them on the supported runtime matrix.
 
 ## Runtime requirements
 
@@ -10,7 +10,7 @@ Bridge HTTP-controlled devices into HomeKit using Homebridge. Configure a servic
 - Homebridge 1.11.4 or later in the 1.x line, or Homebridge 2.4 or later in the 2.x line.
 - Older Node/Homebridge versions continue to use plugin 1.3.0. Upgrade Homebridge's runtime before testing this Alpha.
 
-The package uses TypeScript compiled to ESM and the HAP API supplied by Homebridge. It does not load or bundle a second HAP runtime. The tested versions and remaining validation are recorded in [the report](docs/implementation-report.md).
+The package uses TypeScript compiled to ESM and the HAP API supplied by Homebridge. It does not load or bundle a second HAP runtime. CI exercises the supported Node/Homebridge matrix; field validation remains part of the prerelease process.
 
 ## Existing accessory configuration
 

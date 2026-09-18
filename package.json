@@ -54,7 +54,10 @@
     "config.schema.json",
     "README.md",
     "LICENSE",
-    "docs",
+    "docs/migration.md",
+    "docs/performance.md",
+    "docs/service-support.md",
+    "docs/legacy-reference.md",
     "sample-config.json"
   ],
   "bugs": {
