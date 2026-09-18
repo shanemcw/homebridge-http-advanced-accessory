@@ -34,7 +34,7 @@ test('total timeout and shutdown abort body reads; connection refusal is categor
   const work = transport.request({url:server.url},{},'a'); await sleep(10); transport.shutdown();
   await assert.rejects(work,{category:'aborted'});
   const other = harness(t);
-  // reserve then close a port so no household endpoint is contacted
+  // reserve then close a port so no external endpoint is contacted
   const closed = await fakeServer(); await closed.close();
   await assert.rejects(other.transport.request({url:closed.url},{},'a'),{category:'network'});
 });
