@@ -1,6 +1,6 @@
 # Alpha implementation and release checkpoint
 
-Status as of 2026-09-13: Alpha.5 is a local, uncommitted candidate. The four-combination test matrix passes; the current review and remaining field gates are tracked in [Beta readiness](beta-readiness.md). Alpha.4 is the last verified field deployment. No publication or upstream announcement is part of this checkpoint.
+Status as of 2026-09-18: the preserved Alpha.5 baseline is deployed and field use is reported successful. Verification found an active service, the expected version, 44 legacy accessories/restored getters, unchanged configuration and HomeKit identity files, and no recorded plugin startup/recovery warnings or errors in the deployment check. Installed files match the preserved baseline build. This contribution branch contains later preparation changes; those changes are not deployed or published to npm. Remaining acceptance items are tracked in [Beta readiness](beta-readiness.md).
 
 ## Baseline and architecture
 
@@ -26,7 +26,7 @@ Normal GET handlers read memory. Acquisition runs independently, with global/per
 
 ## Tooling, metadata and licensing
 
-The candidate version is 2.0.0-alpha.5. Declared runtime support is Node ^22.13.0 or ^24.0.0, Homebridge ^1.11.4 or ^2.4.0. This conservative matrix uses current available Homebridge versions rather than claiming untested support for every historical v1/v2 minor release.
+The review branch retains version 2.0.0-alpha.5; assign a new prerelease version before distributing a modified build. Declared runtime support is Node ^22.13.0 or ^24.0.0, Homebridge ^1.11.4 or ^2.4.0. This conservative matrix uses current available Homebridge versions rather than claiming untested support for every historical v1/v2 minor release.
 
 Official references checked during the initial implementation:
 
@@ -37,11 +37,11 @@ Official references checked during the initial implementation:
 
 Repository, homepage and issue metadata point to the maintained repository. Original author metadata remains; the maintainer is credited as a contributor. The LICENSE has been Apache-2.0 since initial commit `b7f0d4c`; only the contradictory package metadata was reconciled. The LICENSE and historical notices are unchanged. This does not relicense the project.
 
-The package allowlist includes built runtime, schema, custom settings UI, documentation and sample configuration. Tests, development preview scripts, old runtime sources, the planning brief, local configuration, logs, credentials and node_modules are excluded. The custom UI summarizes legacy accessories and directs individual editing to the plugin menu's JSON Config. It maintains platform JSON and global settings stored at top-level `httpAdvanced`, preserving loaded legacy definitions on save.
+The package allowlist includes built runtime, schema, custom settings UI, user-facing migration/performance/service/modernization/legacy references and sample configuration. Benchmark results, this implementation report, Beta working notes and draft release notes remain repository-only. Tests, development preview scripts, old runtime sources, the planning brief, local configuration, logs, credentials and node_modules are excluded. The custom UI summarizes legacy accessories and directs individual editing to the plugin menu's JSON Config. It maintains platform JSON and global settings stored at top-level `httpAdvanced`, preserving loaded legacy definitions on save.
 
 The standard Homebridge plugin config API selects one alias/type. The custom UI therefore uses an editor restricted to this plugin's two aliases and shared settings. It merges into the latest configuration, refuses conflicting plugin edits, preserves unrelated entries and unknown fields, makes a private exact backup, and atomically replaces the file. A per-file lock serializes custom editor saves; other Homebridge editors do not participate in that lock, so avoid simultaneous saves from different tools. A lock left by a terminated process is reclaimed; an unreadable lock requires stopping the UI and removing `config.json.http-advanced.lock` before retrying. File ownership, group and mode are preserved, or the save fails.
 
-Local verification covers the real custom-UI IPC helper and browser editing/save/reload against an isolated sanitized 44-device configuration. Earlier Alpha.3 device control passed field testing, and the Alpha.4 deployment restored all 44 legacy accessories while preserving configuration and pairing identifiers. Alpha.5 has not been deployed; its changes still need field acceptance.
+Local verification covers the real custom-UI IPC helper and browser editing/save/reload against an isolated sanitized 44-device configuration. The Alpha.5 baseline deployment restored all 44 legacy accessories while preserving configuration and pairing identifiers. These checks and successful usage reports do not replace controlled outage, managed-child-bridge lifecycle or rollback acceptance.
 
 ## Measurements
 
@@ -61,13 +61,13 @@ Dated local checkpoints are recorded below; historical results are not evidence 
 - Verify Apple Home pairing, rooms/scenes/automations, command confirmation and manual device updates after the candidate is installed.
 - Test a backend outage longer than 30 seconds and recovery under representative field traffic, with commands during the outage and polite logs.
 - Measure sustained cache age, backend request rate and field `/accessories` latency; compare equivalent workloads rather than warmed snapshot speed alone.
-- Verify backup/rollback and inspect the final candidate diff and tarball. Run remote CI on the final review commit when committing/pushing is authorized.
+- Verify backup/rollback and inspect the final candidate diff and tarball. Run the full CI matrix on the final review commit.
 
-The maintainer announcement is planned for Beta.1 after these gates. Committing, deployment, npm publication and upstream contact require the owner's next instruction. If publication is later authorized, use a matching prerelease version and channel (`alpha` or `beta`); stable/latest remain forbidden by the guard.
+The contribution is being prepared for maintainer review; this checkpoint does not claim Beta or stable readiness. Deployment, npm publication and upstream submission are separate release decisions. If publication is later authorized, use a matching prerelease version and channel (`alpha` or `beta`); stable/latest remain forbidden by the guard.
 
 ### Initial implementation matrix
 
-Node 22.23.2 and Node 24.21.0 each run the suite against Homebridge 1.11.4 and 2.4.0. The four combinations pass 44 tests each (176 executions), including the actual ESM plugin loader. Typecheck, lint and whitespace checks pass. The 45-file package was inspected and installed under an isolated temporary directory with production dependencies only. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its dependency tree. Remote CI is recorded with the review branch.
+Node 22.23.2 and Node 24.21.0 each run the suite against Homebridge 1.11.4 and 2.4.0. The four combinations pass 44 tests each (176 executions), including the actual ESM plugin loader. Typecheck, lint and whitespace checks pass. The package was inspected and installed under an isolated temporary directory with production dependencies only. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its dependency tree. Remote CI is recorded with the review branch.
 
 ### Alpha.3 write-confirmation checkpoint
 
@@ -81,7 +81,7 @@ Plugin Config now prevents editing during an in-flight save, uses field-specific
 
 Startup version reporting uses package metadata. The publication guard accepts only matching Alpha/Beta versions and tags and still rejects stable/latest. The working version remains alpha.5; no publication is enabled or performed.
 
-Validation: Node 24.19.0 passes typecheck, lint and all 92 tests against both Homebridge 1.11.4 and 2.4.0 (184 executions). The focused eight-test configuration suite also passes after the final wording adjustment. Browser checks with sanitized fixtures cover delayed-save locking, integer/positive limits, unique platform names, indexed validation errors, draft retention, error focus, and save/reload with 44 legacy accessories plus a disabled platform. Package dry-run includes package-derived version metadata and excludes tests and preview scripts. This was the first local pass; the deeper review checkpoint below supersedes its test count. These changes are local, uncommitted and undeployed.
+Validation: Node 24.19.0 passes typecheck, lint and all 92 tests against both Homebridge 1.11.4 and 2.4.0 (184 executions). The focused eight-test configuration suite also passes after the final wording adjustment. Browser checks with sanitized fixtures cover delayed-save locking, integer/positive limits, unique platform names, indexed validation errors, draft retention, error focus, and save/reload with 44 legacy accessories plus a disabled platform. Package dry-run includes package-derived version metadata and excludes tests and preview scripts. This was the first local pass; the deeper review checkpoint below supersedes its test count. This paragraph records the pre-deployment review, not the current deployment status.
 
 ### Alpha.5 deeper review checkpoint — 2026-09-13
 
@@ -91,6 +91,14 @@ Disabled platform devices retain their cached identities but fail reads and comm
 
 Settings tests cover per-action timeout, zero-valued device overrides, shared defaults and platform coordinator precedence. Separate OS processes use Homebridge's actual storage-path API to verify that shared defaults load in each process while coordinator overrides stay process-local. The [settings reference](modernization.md#shared-settings-and-precedence) records the existing discovery-order rule for multiple platform coordinator overrides. Registration aliases and package-derived version reporting now share one metadata module.
 
-Node 22.23.2 and Node 24.19.0 each pass all 97 tests against Homebridge 1.11.4 and 2.4.0: 388 test executions, no failures or skips. Typecheck and lint pass on both Node versions. Alpha.5 remains local, uncommitted and undeployed. The Beta readiness checklist distinguishes these local checks from outstanding field validation.
+Node 22.23.2 and Node 24.19.0 each pass all 97 tests against Homebridge 1.11.4 and 2.4.0: 388 test executions, no failures or skips. Typecheck and lint pass on both Node versions. These tests preceded the successful baseline deployment recorded above. The Beta readiness checklist distinguishes these local checks from outstanding field validation.
 
-The reviewed 59-file tarball installs with production dependencies only and loads both registration aliases without a bundled Homebridge or the historical request/polling libraries. Package metadata and UI assets are present; tests, preview scripts and local configuration are excluded. The isolated production dependency audit reports zero known vulnerabilities on 2026-09-13. These package checks are local and do not deploy or publish the candidate.
+The reviewed baseline tarball installs with production dependencies only and loads both registration aliases without a bundled Homebridge or the historical request/polling libraries. Package metadata and UI assets are present; tests, preview scripts and local configuration are excluded. The isolated production dependency audit reports zero known vulnerabilities on 2026-09-13. These package checks are local and do not deploy or publish the candidate.
+
+## Contribution-preparation scope — 2026-09-18
+
+Preparation starts from the preserved Alpha.5 source, not the earlier Alpha.1 modernization branch. Separate commits sanitize public material, align upstream package links and CI, stabilize the settings test, harden cross-origin header handling, and clean package contents/release evidence. Runtime changes are confined to redirect header/credential handling; recovery, cache, write confirmation, platform lifecycle, settings, UI and mapper behavior retain the baseline implementation. The metadata-driven version and Alpha/Beta-aware guard remain intact.
+
+The settings test now observes the delay submitted to the coordinator instead of inferring it from server-arrival timestamps. A separate regression still checks actual request-start spacing. Redirect coverage includes GET/HEAD, custom headers, cookies, mixed-case Authorization, device and URL credentials, subsequent redirect hops and same-origin retention.
+
+Preparation validation on 2026-09-18: Node 22.23.2 and 24.19.0 each pass 98 tests against Homebridge 1.11.4 and 2.4.0 (392 executions), with typecheck, lint and whitespace checks passing. Package dry-run and actual archive inspection retain the UI and user references, exclude repository-only evidence and tests, and find no broken relative document links. An isolated production-only install registers both adapters with the correct metadata-driven version and passes the production dependency audit with zero known vulnerabilities. A tracked-file scan found no installation-specific terminology, local account paths, private/persona vocabulary, fork package links or secret-like tokens; inherited upstream examples and intentional test credentials remain. CI runs the same matrix on the preparation branch. Historical baseline results above remain separate from these preparation checks.

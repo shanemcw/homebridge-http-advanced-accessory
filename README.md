@@ -8,9 +8,9 @@ Connect HTTP-controlled devices and web services to Apple Home through Homebridg
 - **More resilient HTTP handling:** bounded requests, background recovery and quieter logs accommodate slow or temporarily unavailable servers, including older systems you cannot change.
 - **Migration at your pace:** maintain existing accessories through JSON Config, and add platform devices alongside them when useful. The plugin also keeps a requested switch state visible while the server catches up, avoiding a brief reversal caused by stale reads.
 
-**Release status: `2.0.0-alpha.5` is a prerelease candidate.** Compatibility applies on the supported runtimes below. Refresh timing changes, and voluntarily converting a device to the platform creates a new HomeKit identity. [Compatibility details](docs/modernization.md#what-non-breaking-means-here) explain those boundaries.
+**Release status: contribution preparation based on the field-tested `2.0.0-alpha.5` baseline.** This branch adds review changes and has not been deployed or published to npm. The package version is retained during review; a changed distributable will receive a new prerelease version. Compatibility applies on the supported runtimes below. Refresh timing and cross-origin header forwarding change, and voluntarily converting a device to the platform creates a new HomeKit identity. [Compatibility details](docs/modernization.md#what-non-breaking-means-here) explain those boundaries.
 
-[User guide](#user-guide) · [Modernization details](#modernization-details) · [Developer reference](docs/modernization.md#development-and-release-policy) · [Beta readiness](docs/beta-readiness.md)
+[User guide](#user-guide) · [Modernization details](#modernization-details) · [Developer reference](docs/modernization.md#development-and-release-policy)
 
 ## User guide
 
@@ -27,7 +27,7 @@ Older environments need a runtime upgrade before testing this Alpha. Plugin 1.3.
 
 Back up Homebridge first, including configuration, cached accessories and pairing data. Install the reviewed Alpha package into the **same plugin location your Homebridge installation already uses**, then restart Homebridge. Keep your existing accessory definitions and Homebridge storage in place.
 
-For this unpublished testing candidate, use the supplied `.tgz` archive. npm remains on stable 1.3.0. For example, on a server that keeps plugins in `/var/lib/homebridge`, run as the account that owns that installation:
+For testing the preserved Alpha.5 baseline, use its reviewed `.tgz` archive. Preparation-branch builds are not release artifacts. For example, on a server that keeps plugins in `/var/lib/homebridge`, run as the account that owns that installation:
 
 ```sh
 npm install --prefix /var/lib/homebridge --omit=dev --ignore-scripts /path/to/homebridge-http-advanced-accessory-2.0.0-alpha.5.tgz
@@ -94,7 +94,7 @@ Use **Also use as a platform** in the settings screen, or add an `HttpAdvanced` 
 }
 ```
 
-Choose a permanent device `id` before pairing, and keep the platform name stable. The device's display name can then change without changing its platform identity. Disabling a platform keeps its definitions and cached identities but stops device updates.
+Choose a permanent device `id` before pairing, and keep the platform name stable. The device's display name can then change without changing its platform identity. After restart, disabling a platform keeps its definitions and cached identities while reporting device reads and commands unavailable.
 
 **Accessories and platforms can coexist for different devices.** Do not define the same physical device in both places. Moving an existing accessory into a platform is an optional, deliberate conversion: it creates a different HomeKit identity and may require reassigning rooms, scenes and automations. There is no automatic identity-preserving migration tool in this Alpha. Follow the [migration guide](docs/migration.md) if you choose to convert devices.
 
@@ -162,4 +162,4 @@ The [modernization and developer reference](docs/modernization.md) contains the 
 - Service support, optional characteristics, configuration editing and platform lifecycle.
 - Benchmark interpretation, development commands, test coverage and release policy.
 
-The [Alpha release notes](docs/alpha-release-notes.md) summarize this candidate; the [implementation report](docs/implementation-report.md) records validation and remaining release gates. The project retains its existing [Apache-2.0 license](LICENSE) and historical authorship.
+The project retains its existing [Apache-2.0 license](LICENSE) and historical authorship.

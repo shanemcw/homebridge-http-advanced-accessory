@@ -1,6 +1,6 @@
 # Beta.1 readiness
 
-Local checkpoint: 2026-09-13, `2.0.0-alpha.5`. Alpha.4 is the last verified field deployment. These changes are uncommitted and have not been deployed or published.
+Checkpoint: 2026-09-18. The preserved `2.0.0-alpha.5` baseline was deployed on 2026-09-13 and verified again on 2026-09-18. Homebridge was active with 44 legacy accessories and restored getters; deployment checks found configuration and HomeKit identity files unchanged, with no recorded plugin startup/recovery warnings or errors. Subsequent usage is reported successful. This is evidence for that baseline, not for the preparation changes on this branch, which remain undeployed and unpublished to npm.
 
 | Area | Local evidence | Remaining acceptance |
 |---|---|---|
@@ -12,9 +12,11 @@ Local checkpoint: 2026-09-13, `2.0.0-alpha.5`. Alpha.4 is the last verified fiel
 
 ## Local verification
 
-All 97 tests pass on each combination of Node 22.23.2/24.19.0 and Homebridge 1.11.4/2.4.0: 388 executions, no failures or skips. Typecheck and lint pass on both Node versions. Browser checks use a sanitized fixture and an isolated configuration server. Process-isolation and real HAP restoration tests do not prove live pairing, managed-child-bridge startup or field behavior.
+The preserved baseline passed the full Node 22/24 × Homebridge 1/2 CI matrix. A local parallel run exposed a timing-sensitive settings assertion; this preparation branch verifies the configured delay at the coordinator boundary and retains the separate actual-start-spacing regression. Typecheck and lint pass on both Node versions. Browser checks use a sanitized fixture and an isolated configuration server. Process-isolation and real HAP restoration tests do not prove live pairing, managed-child-bridge startup or field behavior.
 
-The reviewed 59-file tarball installs into a fresh temporary directory with production dependencies only. Its entry point registers both adapters, its startup metadata matches Alpha.5, and it includes the custom UI without tests, preview scripts or local configuration. Homebridge, the historical regression baseline, `request` and `polling-to-event` are absent from that installed dependency tree. The production dependency audit reports zero known vulnerabilities at this checkpoint; this is an advisory check, not a security audit.
+The reviewed baseline tarball installs into a fresh temporary directory with production dependencies only. Its entry point registers both adapters, its startup metadata matches Alpha.5, and it includes the custom UI without tests, preview scripts or local configuration. Homebridge, the historical regression baseline, `request` and `polling-to-event` are absent from that installed dependency tree. The production dependency audit reports zero known vulnerabilities at the baseline checkpoint; this is an advisory check, not a security audit.
+
+The preparation candidate passes the full local Node 22/24 × Homebridge 1/2 matrix, typecheck and lint. Its production-only install smoke test, package-content/link inspection and production dependency audit also pass. CI results belong to the exact reviewed branch revision; these checks do not imply deployment or completion of the field exit criteria.
 
 ## Field exit criteria
 
@@ -24,4 +26,4 @@ The reviewed 59-file tarball installs into a fresh temporary directory with prod
 4. Record sustained cache age, request rate, recovery log volume and field `/accessories` timing. The synthetic warmed-read benchmark alone is insufficient.
 5. Verify the backup and rollback path. Review the final package and run CI on the authorized review commit before promoting to Beta.1.
 
-Alpha.3 toggling/manual operation passed owner testing; Alpha.4 restored 44 legacy devices. Those results provide continuity evidence, but do not replace acceptance of the Alpha.5 recovery and lifecycle changes. Deployment, commits, publication and upstream contact remain separate next steps requiring the owner's instruction.
+The successful baseline deployment and usage provide continuity evidence. Managed-child-bridge lifecycle coverage, controlled outage/soak measurements and a restore rehearsal remain distinct acceptance items. The preparation branch also needs review of its redirect behavior change and the final candidate diff. Choose a new prerelease version before deployment or publication; retain the Alpha.5 tag unchanged.

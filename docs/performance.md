@@ -6,7 +6,7 @@ Run `npm run benchmark -- --save` from the source checkout. It uses real HAP ser
 
 The baseline uses the 41 on-demand entries from the 44-device fixture; the three 500-second pollers are separately covered by interval tests. The Alpha warms all 44 entries, then serializes their HAP state. Acquisition is separated from measurement so every network request caused by the bulk read can be attributed exactly. Timings are diagnostic rather than portable absolute performance guarantees.
 
-`benchmark-results.json` records baseline bulk time, Alpha bulk time, getter request counts, full refresh sweep time, median/p95/max cache age and request latency, queue high-water mark, concurrency and failures. Cache age is measured at the end of a sweep and is not a long-running field freshness result.
+The source checkout's `docs/benchmark-results.json` (excluded from the npm package) records baseline bulk time, Alpha bulk time, getter request counts, full refresh sweep time, median/p95/max cache age and request latency, queue high-water mark, concurrency and failures. Cache age is measured at the end of a sweep and is not a long-running field freshness result.
 
 ## Field Homebridge measurements still required
 
@@ -33,4 +33,4 @@ Approve default cadence based on actual freshness and sustained load. If a full 
 
 The tested HAP implementations can reuse a recent `/accessories` snapshot. Space repeated measurements beyond the implementation's reuse window and record the Homebridge/HAP versions so snapshot reuse is not mistaken for a plugin improvement.
 
-Alpha has not yet been measured in a field installation.
+The Alpha.5 baseline has been deployed successfully, but a controlled field performance comparison has not been recorded.

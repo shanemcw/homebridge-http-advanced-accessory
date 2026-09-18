@@ -1,6 +1,6 @@
 # Modernization details and developer reference
 
-This reference describes the behavior of **2.0.0-alpha.5**. Start with the [README](../README.md) for the compatibility summary, installation and everyday configuration.
+This reference describes the **2.0.0-alpha.5** baseline and the redirect hardening under review on the contribution branch. Start with the [README](../README.md) for the compatibility summary, installation and everyday configuration.
 
 ## What non-breaking means here
 
@@ -16,6 +16,7 @@ Compatibility does not mean every runtime behavior is identical to 1.3.0. In par
 | Read timing | Default on-demand acquisition becomes background refresh. HomeKit reads return memory state promptly, with finite staleness and bounded background traffic. Positive polling intervals remain, with a brief confirmation phase after writes. |
 | Writes | HTTP acknowledgement is followed by a bounded requested-state window while the getter catches up. Failed writes are not replayed. A matching response, expiry or command failure ends that command's pending state. |
 | Responses and errors | Existing non-2xx body mapping remains the default, except 429/503 with `Retry-After`. Timeouts, size limits and invalid values produce contained failures. Stricter HTTP/extraction checks are optional. |
+| Redirects | Same-origin redirects retain configured headers and credentials. Cross-origin redirects drop all configured headers and device Basic Auth, including custom headers that older builds forwarded. Configure the final trusted URL directly if it needs them. |
 | Mapper compatibility | Legacy pass-through and raw-state semantics remain. Maintained JSONPath dependencies use a safe evaluator; unusual executable legacy JSONPath expressions require individual verification. |
 
 See [upgrade and migration](migration.md), [supported services](service-support.md) and the behavior below before opting into Alpha on an existing installation.
@@ -190,7 +191,7 @@ Local integration tests serialize and deserialize Homebridge platform accessorie
 
 The recorded synthetic fixture compares about 2.15 seconds for a blocking 41-getter read with about 3 ms for a warmed 44-device cached snapshot, issuing no new HTTP getter requests for that snapshot. Refreshing all 44 devices separately took about 2.25 seconds. These measure different stages: the cache speeds up HomeKit reads; it does not make the web server or physical device instantaneous. They are fixture measurements, not a promised speedup on every installation.
 
-Use the [measurement guide](performance.md) to compare read latency, cache freshness and sustained backend load together. The [implementation report](implementation-report.md) records tested versions, package checks and remaining release gates; [Alpha release notes](alpha-release-notes.md) summarize the candidate.
+Use the [measurement guide](performance.md) to compare read latency, cache freshness and sustained backend load together. Repository-only review notes record validation evidence and remaining release gates; they are excluded from the installed package.
 
 ## Development and release policy
 
@@ -206,6 +207,6 @@ npm pack --dry-run
 
 CI exercises Node 22/24 and real Homebridge v1/v2 HAP implementations. Unit/integration tests use only loopback fake servers. `legacy-plugin` is a test-only alias of published 1.3.0; its obsolete dependencies are excluded from production installation and the tarball. `npm audit --omit=dev` audits the maintained runtime separately.
 
-Any future public prerelease must use an explicit tag matching its version channel (`alpha` or `beta`) and be marked as a GitHub prerelease. The guard rejects stable versions, channel mismatches and `latest`. `publishConfig.tag` remains `alpha` for this Alpha candidate; update it deliberately when preparing Beta. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely synthetic fixtures.
+Any future public prerelease must use an explicit tag matching its version channel (`alpha` or `beta`) and be marked as a GitHub prerelease. The guard rejects stable versions, channel mismatches and `latest`. `publishConfig.tag` remains `alpha` for this Alpha candidate; update it deliberately when preparing Beta. No automatic publishing workflow is enabled. The preserved Alpha.5 tag identifies the deployed baseline; the preparation branch retains its package version for review only. Assign a new prerelease version before distributing changes. Stable requires broader device, restart and real-installation evidence, not merely synthetic fixtures.
 
 The existing Apache-2.0 LICENSE remains unchanged. Package metadata is reconciled to that file, which has existed since the initial commit; historical authorship is retained and the current maintainer is credited.
