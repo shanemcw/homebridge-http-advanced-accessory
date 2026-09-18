@@ -32,10 +32,14 @@ test('invalid shared settings fall back without exposing their content',async t=
 test('global HTTP timeout and spacing apply to unchanged legacy actions; explicit action timeout wins',async t=>{
   const server=await fakeServer(t,async(_req,res)=>{await sleep(60);res.end('1');});
   const runtime=new Runtime(silentLog,{},undefined,{requestTimeout:20,uriCallsDelay:80});t.after(()=>runtime.shutdown());
+  const submitted=t.mock.method(runtime.coordinator,'submit');
   const action={url:server.url};const config={name:'Legacy',service:'Switch'};
   await assert.rejects(runtime.transport.request(action,config,'owner'),{category:'timeout'});
   await runtime.transport.request({...action,timeout:300},config,'owner');
-  assert.ok(server.requests[1].time-server.requests[0].time>=70);
+  assert.deepEqual(submitted.mock.calls.map(({arguments:args})=>args.slice(0,4)),[
+    [new URL(server.url).origin,'owner',80,false],
+    [new URL(server.url).origin,'owner',80,false],
+  ]);
   assert.deepEqual(action,{url:server.url});assert.deepEqual(config,{name:'Legacy',service:'Switch'});
 });
 
