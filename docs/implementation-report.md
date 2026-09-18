@@ -18,7 +18,7 @@ Normal GET handlers read memory. Acquisition runs independently, with global/per
 - Preserve immediate acknowledgement and last-write debounce when `setterDelay` is configured. Delayed errors remain log-only, with cache restoration.
 - Preserve explicit polling intervals, including all three 500-second entries in the 44-device fixture. Default on-demand acquisition becomes adaptive background refresh: five seconds during active use, sixty seconds when idle. This deliberately changes acquisition timing and needs field validation for freshness/load.
 - Omit the old empty Basic Authorization header when no credentials are configured, as allowed by the brief.
-- Bound HTTP total duration (default ten seconds), response size (8 MiB), redirects (ten), fallback depth (32), pending queue and retries. Malformed remote values no longer leave getter callbacks hanging.
+- Bound HTTP total duration (default ten seconds), response size (8 MiB), redirects (ten), fallback depth (32), pending queue and retries. Cross-origin GET/HEAD redirects drop configured headers and credentials; same-origin redirects retain them. Malformed remote values no longer leave getter callbacks hanging.
 - Retain trusted eval/template execution in a dedicated compatibility module. JSONPath uses the maintained implementation's safe evaluator. Exotic executable JSONPath scripts and expressions depending on undocumented closure internals still need individual assessment.
 - Alias BatteryService to Battery. List services removed by HAP v2 explicitly; do not invent substitutes.
 - Preserve fixed legacy Manufacturer/Model/SerialNumber values; honor configuration metadata in the new platform path.
@@ -65,4 +65,4 @@ Do not publish stable 2.0.0 or move `latest`. The first Alpha is not complete un
 
 ### Local final matrix
 
-Node 22.23.2 and Node 24.21.0 each run the suite against Homebridge 1.11.4 and 2.4.0. The four combinations pass the full suite, including the actual ESM plugin loader and redirect security coverage. Typecheck, lint and whitespace checks pass. The 45-file package was inspected and installed under an isolated temporary directory with production dependencies only. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its dependency tree. Remote CI is recorded with the review branch.
+CI runs Node 22 and Node 24 against the Homebridge v1/v2 compatibility targets. All four combinations pass the full suite, including the actual ESM plugin loader and redirect security coverage. Typecheck, lint and whitespace checks pass. The current 42-file npm tarball passes dry-run inspection and excludes repository-only release evidence and test-only dependencies. Its entry point loads and registers both adapters without request, polling-to-event, legacy-plugin or Homebridge in its runtime dependency tree.

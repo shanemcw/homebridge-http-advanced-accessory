@@ -16,6 +16,7 @@ Known limitations and changes:
 - Explicit positive polling intervals remain authoritative.
 - Legacy truthy static mapping and preemptive authentication behavior remain compatible.
 - Invalid responses are contained, with bounded timeout, response size and fallback depth.
+- Cross-origin GET/HEAD redirects drop configured request headers and credentials; same-origin redirects retain configured headers.
 - Eval and legacy templates remain executable trusted configuration, not a sandbox.
 - Platform conversion uses new identities; do not duplicate existing devices across configuration styles.
 - HAP v2 removed several old service classes; consult the service inventory.
