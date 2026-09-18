@@ -27,7 +27,7 @@ Known limitations and changes:
 - Eval and legacy templates remain executable trusted configuration, not a sandbox.
 - Platform conversion uses new identities; do not duplicate existing devices across configuration styles.
 - HAP v2 removed several old service classes; consult the service inventory.
-- Live Home Control freshness, unchanged reader parsing, HomeKit pairing/automation behavior, physical device control and Homebridge UI validation remain prerequisites for publishing this candidate.
+- Field validation of cache freshness and backend load, HomeKit pairing/automation behavior, physical device control, restart/restore behavior and Homebridge UI configuration remains a prerequisite for publishing this candidate.
 
 For reports include Node/Homebridge/plugin versions, sanitized diagnostics, request duration, queue depth, cache age and sustained request rate. Never include credentials, PINs or an unredacted configuration.
 

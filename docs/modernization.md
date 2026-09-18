@@ -184,7 +184,7 @@ The legacy adapter retains the fixed Manufacturer, Model and SerialNumber values
 
 After saving and restarting, a disabled platform retains cached identities but reports its device reads and commands unavailable. Re-enabling with the same platform name and device IDs restores those identities. Invalid enable flags or inventories retain cached accessories and report them unavailable instead of accepting commands without a working device handler. A valid empty inventory explicitly unregisters its devices.
 
-Local integration tests serialize and deserialize Homebridge platform accessories between fresh API instances, covering disable, rename/re-enable, real getter/setter handlers, invalid inventory retention and explicit removal. This verifies the persistence boundary without pairing a household HomeKit controller.
+Local integration tests serialize and deserialize Homebridge platform accessories between fresh API instances, covering disable, rename/re-enable, real getter/setter handlers, invalid inventory retention and explicit removal. This verifies the persistence boundary without pairing a field HomeKit controller.
 
 ## Measurements and validation
 
@@ -206,6 +206,6 @@ npm pack --dry-run
 
 CI exercises Node 22/24 and real Homebridge v1/v2 HAP implementations. Unit/integration tests use only loopback fake servers. `legacy-plugin` is a test-only alias of published 1.3.0; its obsolete dependencies are excluded from production installation and the tarball. `npm audit --omit=dev` audits the maintained runtime separately.
 
-Any future public prerelease must use an explicit tag matching its version channel (`alpha` or `beta`) and be marked as a GitHub prerelease. The guard rejects stable versions, channel mismatches and `latest`. `publishConfig.tag` remains `alpha` for this Alpha candidate; update it deliberately when preparing Beta. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely one working household fixture.
+Any future public prerelease must use an explicit tag matching its version channel (`alpha` or `beta`) and be marked as a GitHub prerelease. The guard rejects stable versions, channel mismatches and `latest`. `publishConfig.tag` remains `alpha` for this Alpha candidate; update it deliberately when preparing Beta. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely synthetic fixtures.
 
 The existing Apache-2.0 LICENSE remains unchanged. Package metadata is reconciled to that file, which has existed since the initial commit; historical authorship is retained and the current maintainer is credited.

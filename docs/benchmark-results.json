@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-10T19:26:45.788Z",
-  "scope": "Synthetic loopback backend and real HAP serialization; not a live Home Control measurement",
+  "scope": "Synthetic loopback backend and real HAP serialization; not a field measurement",
   "node": "v24.21.0",
   "homebridge": "2",
   "syntheticBackendDelayMS": 50,
