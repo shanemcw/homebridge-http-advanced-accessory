@@ -18,7 +18,7 @@
   "author": "tasict",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shanemcw/homebridge-http-advanced-accessory.git"
+    "url": "git+https://github.com/staromeste/homebridge-http-advanced-accessory.git"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.6",
@@ -26,7 +26,7 @@
     "jsonpath-plus": "^10.4.0",
     "xpath": "0.0.34"
   },
-  "homepage": "https://github.com/shanemcw/homebridge-http-advanced-accessory#readme",
+  "homepage": "https://github.com/staromeste/homebridge-http-advanced-accessory#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
@@ -60,7 +60,7 @@
     "homebridge-ui"
   ],
   "bugs": {
-    "url": "https://github.com/shanemcw/homebridge-http-advanced-accessory/issues"
+    "url": "https://github.com/staromeste/homebridge-http-advanced-accessory/issues"
   },
   "contributors": [
     "Shane McWhorter"
