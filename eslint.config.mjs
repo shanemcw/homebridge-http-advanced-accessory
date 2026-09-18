@@ -5,4 +5,5 @@ export default ts.config(
   { files: ['src/**/*.ts'], extends: [js.configs.recommended, ...ts.configs.recommended],
     rules: { '@typescript-eslint/no-explicit-any': 'error' } },
   { files: ['test/**/*.mjs', 'scripts/**/*.mjs'], rules: { 'no-unreachable': 'error', 'no-constant-condition': 'error' } },
+  { files: ['homebridge-ui/**/*.js'], rules: { 'no-unreachable': 'error', 'no-constant-condition': 'error' } },
 );

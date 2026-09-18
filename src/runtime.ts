@@ -5,9 +5,13 @@ import type { API, CharacteristicValue, Logging } from 'homebridge';
 import { Coordinator } from './coordinator.js';
 import { Transport } from './transport.js';
 import { Actions } from './actions.js';
-import { ActionError, type CacheEntry, type CoordinatorConfig, type DeviceConfig, type ErrorCategory, type State } from './types.js';
+import { readGlobalSettings, type GlobalSettings } from './settings.js';
+import { pluginVersion } from './metadata.js';
+import { ActionError, type CacheEntry, type CoordinatorConfig, type DeviceConfig, type ErrorCategory, type PendingWrite, type State } from './types.js';
 
 type Persisted = { value: CharacteristicValue; stateValue?: unknown; lastSuccess: number; lastChange: number };
+type Recovery = { since: number; nextProbe: number; attempts: number; lastWarning: number; category: ErrorCategory };
+const temporaryFailure = (category?: ErrorCategory): boolean => category !== undefined && ['network', 'timeout', 'inconclusive', 'unavailable'].includes(category);
 export const fingerprint = (value: unknown): string => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export class Runtime {
   readonly coordinator: Coordinator;
@@ -17,6 +21,7 @@ export class Runtime {
   readonly setters = new Map<string, NodeJS.Timeout>();
   private readonly persisted: Record<string, Persisted> = {};
   private readonly owners = new Set<string>();
+  private readonly recovering = new Map<string, Recovery>();
   private timer?: NodeJS.Timeout;
   private persistenceTimer?: NodeJS.Timeout;
   private stopped = false;
@@ -25,9 +30,9 @@ export class Runtime {
   private dirty = false;
   readonly stats = { changes: 0, mapperFailures: 0, restored: 0, reads: 0, failedRefreshes: 0 };
 
-  constructor(readonly log: Logging, options: CoordinatorConfig = {}, persistPath?: string) {
-    this.coordinator = new Coordinator(options);
-    this.transport = new Transport(this.coordinator);
+  constructor(readonly log: Logging, options: CoordinatorConfig = {}, persistPath?: string, readonly settings: GlobalSettings = {}) {
+    this.coordinator = new Coordinator({ ...settings.coordinator, ...options });
+    this.transport = new Transport(this.coordinator, settings);
     this.actions = new Actions(this.transport);
     if (persistPath) {
       this.savePath = join(persistPath, 'http-advanced-state-v1');
@@ -62,7 +67,7 @@ export class Runtime {
   start(): void {
     if (this.started || this.stopped) return;
     this.started = true;
-    this.log.info(`HTTP Advanced 2.0.0-alpha.1: ${this.owners.size} devices, ${this.entries.size} cached getters, ${this.stats.restored} restored; concurrency ${this.coordinator.limits.concurrency}/${this.coordinator.limits.perOrigin}`);
+    this.log.info(`HTTP Advanced ${pluginVersion}: ${this.owners.size} devices, ${this.entries.size} cached getters, ${this.stats.restored} restored; concurrency ${this.coordinator.limits.concurrency}/${this.coordinator.limits.perOrigin}`);
     this.timer = setInterval(() => this.tick(), 100);
     this.timer.unref();
     this.persistenceTimer = setInterval(() => { this.persist(); this.debugSnapshot(); }, 30000);
@@ -72,7 +77,7 @@ export class Runtime {
 
   interval(entry: CacheEntry, now = Date.now()): number {
     if (entry.config.forceRefreshDelay) return entry.config.forceRefreshDelay * 1000;
-    const options = entry.config.refresh ?? {};
+    const options = { ...this.settings.refresh, ...entry.config.refresh };
     return now - entry.lastDemand > (options.idleAfter ?? 60) * 1000
       ? (options.idleInterval ?? 60) * 1000 : (options.activeInterval ?? 5) * 1000;
   }
@@ -80,6 +85,8 @@ export class Runtime {
   read(entry: CacheEntry): CharacteristicValue {
     this.stats.reads++;
     entry.lastDemand = Date.now();
+    this.expireWrite(entry, entry.lastDemand);
+    if (entry.pendingWrite) return entry.pendingWrite.value;
     // demand only marks work eligible; the scheduler starts it on a separate turn
     if (!entry.config.forceRefreshDelay && entry.failures === 0 && entry.lastDemand - entry.lastSuccess >= this.interval(entry)) {
       entry.nextEligible = Math.min(entry.nextEligible, entry.lastDemand);
@@ -90,8 +97,14 @@ export class Runtime {
 
   tick(now = Date.now()): void {
     if (this.stopped) return;
+    this.reportRecovery(now);
+    // expiry must still reach HomeKit when the endpoint or request queue is blocked
+    for (const entry of this.entries.values()) this.expireWrite(entry, now);
     for (const entry of [...this.entries.values()].sort((a, b) => a.nextEligible - b.nextEligible)) {
       if (!this.coordinator.available) break;
+      if (entry.pendingWrite && entry.pendingWrite.expires === undefined) continue;
+      const origin = this.originFor(entry);
+      if (origin && !this.coordinator.backgroundReady(origin, now)) continue;
       if (!entry.inFlight && entry.nextEligible <= now) void this.refresh(entry);
     }
   }
@@ -103,9 +116,21 @@ export class Runtime {
     const generation = entry.generation;
     try {
       let fallbackError: ErrorCategory | undefined;
-      const raw = await this.actions.get(entry.config.urls![entry.actionName], entry.config, this.ownerFor(entry), entry.state, new Set(), category => { fallbackError = category; });
-      if (this.stopped || generation !== entry.generation) return;
-      const value = entry.convert(raw);
+      let fallbackRetryAfter: number | undefined;
+      const raw = await this.actions.get(entry.config.urls![entry.actionName], entry.config, this.ownerFor(entry), entry.state, new Set(), (category, retryAfter) => { fallbackError = category; fallbackRetryAfter = retryAfter; });
+      if (this.stopped || generation !== entry.generation || (entry.pendingWrite && entry.pendingWrite.expires === undefined)) return;
+      // an unusable response (including a gateway timeout page) is not a broken mapper
+      if (raw === 'inconclusive') throw new ActionError('inconclusive');
+      let value: CharacteristicValue;
+      try { value = entry.convert(raw); }
+      catch (error) {
+        // valid mapping code can still receive a temporary non-value from an older server
+        if (error instanceof ActionError && error.category === 'mapper') throw new ActionError('inconclusive');
+        throw error;
+      }
+      // an error fallback is not confirmation of a command, even if its value matches
+      if (entry.pendingWrite && fallbackError) throw new ActionError(fallbackError, fallbackRetryAfter);
+      if (entry.pendingWrite && (value === entry.pendingWrite.value || Date.now() >= entry.pendingWrite.expires!)) delete entry.pendingWrite;
       const changed = !entry.known || value !== entry.value;
       entry.value = value; entry.known = true;
       if (!fallbackError) entry.lastSuccess = Date.now();
@@ -114,19 +139,30 @@ export class Runtime {
       entry.state[entry.actionName] = entry.stateValue;
       if (changed) { entry.lastChange = Date.now(); this.stats.changes++; }
       // also clear a prior HAP error without calling any setter
-      entry.update(value);
+      entry.update(entry.pendingWrite?.value ?? value);
       this.dirty = true;
-      if (fallbackError) throw new ActionError(fallbackError);
+      if (fallbackError) throw new ActionError(fallbackError, fallbackRetryAfter);
       this.persisted[entry.key] = { value, stateValue: entry.stateValue, lastSuccess: entry.lastSuccess, lastChange: entry.lastChange };
+      this.finishRecovery(entry);
       entry.failures = 0; entry.lastError = undefined;
       entry.nextEligible = Date.now() + this.interval(entry) * (1 + Math.random() * 0.1);
+      if (entry.pendingWrite) entry.nextEligible = Math.min(entry.nextEligible, Date.now() + 1000, entry.pendingWrite.expires!);
     } catch (error) {
-      if (this.stopped) return;
+      if (this.stopped || generation !== entry.generation) return;
+      if (error instanceof ActionError && error.category === 'deferred') {
+        entry.nextEligible = Date.now() + Math.max(100, error.retryAfter ?? 0);
+        return;
+      }
+      this.expireWrite(entry, Date.now());
       entry.failures++; this.stats.failedRefreshes++;
       entry.lastError = error instanceof ActionError ? error.category : 'mapper';
       if (entry.lastError === 'mapper') this.stats.mapperFailures++;
       entry.nextEligible = Date.now() + Math.min(300000, Math.max(this.interval(entry), 1000) * 2 ** Math.min(entry.failures - 1, 8)) * (1 + Math.random() * 0.1);
-      if (entry.config.debug || entry.failures === 1) this.log.warn(`HTTP Advanced ${entry.actionName}: ${entry.lastError}; retaining last known state; retry in ${Math.round((entry.nextEligible - Date.now()) / 1000)}s`);
+      if (temporaryFailure(entry.lastError)) {
+        this.pauseOrigin(entry, error instanceof ActionError ? error.retryAfter : undefined);
+      } else if (entry.failures === 1) {
+        this.log.warn(`HTTP Advanced action ${entry.key.slice(0, 12)} ${entry.actionName}: ${entry.lastError}; keeping cached state where available; retrying in background`);
+      }
     } finally {
       entry.inFlight = false;
       // a SET that raced an old GET must be verified again after that GET leaves
@@ -136,14 +172,89 @@ export class Runtime {
 
   private ownerFor(entry: CacheEntry): string { return fingerprint(entry.config); }
 
-  async set(config: DeviceConfig, state: State, actionName: string, value: CharacteristicValue, entry?: CacheEntry): Promise<void> {
+  private originFor(entry: CacheEntry): string | undefined {
+    try { return new URL(entry.config.urls![entry.actionName].url).origin; }
+    catch { return undefined; }
+  }
+
+  private pauseOrigin(entry: CacheEntry, retryAfter = 0): void {
+    const origin = this.originFor(entry);
+    if (!origin) return;
+    const now = Date.now();
+    const recovery = this.recovering.get(origin) ?? { since: now, nextProbe: 0, attempts: 0, lastWarning: 0, category: entry.lastError! };
+    // failures from requests already in flight belong to the same attempt
+    if (now >= recovery.nextProbe) {
+      recovery.attempts++;
+      recovery.nextProbe = now + Math.min((this.settings.recovery?.maxRetryInterval ?? 30) * 1000, (this.settings.recovery?.retryInterval ?? 5) * 1000 * 2 ** Math.min(recovery.attempts - 1, 20));
+    }
+    recovery.nextProbe = Math.max(recovery.nextProbe, now + retryAfter);
+    recovery.category = entry.lastError!;
+    this.recovering.set(origin, recovery);
+    this.coordinator.pauseOrigin(origin, recovery.nextProbe);
+    entry.nextEligible = recovery.nextProbe;
+    this.reportRecovery(now);
+  }
+
+  private reportRecovery(now: number): void {
+    for (const [origin, recovery] of this.recovering) {
+      if (now - recovery.since < (this.settings.recovery?.quietPeriod ?? 90) * 1000 || (recovery.lastWarning && now - recovery.lastWarning < (this.settings.recovery?.reminderInterval ?? 300) * 1000)) continue;
+      recovery.lastWarning = now;
+      this.log.warn(`HTTP Advanced endpoint ${fingerprint(origin).slice(0, 12)}: waiting for usable responses for ${Math.round((now - recovery.since) / 1000)}s (${recovery.category}); keeping cached state where available; retrying one background request at a time`);
+    }
+  }
+
+  private finishRecovery(entry: CacheEntry): void {
+    const origin = this.originFor(entry);
+    if (!origin) return;
+    const recovery = this.recovering.get(origin);
+    if (!recovery) return;
+    this.recovering.delete(origin);
+    this.coordinator.resumeOrigin(origin);
+    const message = `HTTP Advanced endpoint ${fingerprint(origin).slice(0, 12)}: responses recovered after ${Math.round((Date.now() - recovery.since) / 1000)}s; refreshing cached state`;
+    if (recovery.lastWarning) this.log.info(message); else this.log.debug(message);
+    // a successful probe releases siblings from outage backoff, retaining normal queue limits
+    for (const sibling of this.entries.values()) {
+      if (temporaryFailure(sibling.lastError) && this.originFor(sibling) === origin) {
+        sibling.failures = 0; sibling.lastError = undefined;
+        sibling.nextEligible = Date.now() + Math.random() * 1000;
+      }
+    }
+  }
+
+  beginWrite(entry: CacheEntry, value: CharacteristicValue): PendingWrite {
+    const intent = { value: entry.convert(value) };
+    entry.generation++;
+    entry.pendingWrite = intent;
+    entry.lastDemand = Date.now();
+    return intent;
+  }
+
+  private expireWrite(entry: CacheEntry, now: number): void {
+    if (entry.pendingWrite?.expires === undefined || now < entry.pendingWrite.expires) return;
+    delete entry.pendingWrite;
+    this.publish(entry);
+  }
+
+  publish(entry: CacheEntry): void {
+    if (this.stopped) return;
+    if (entry.pendingWrite?.expires !== undefined && Date.now() >= entry.pendingWrite.expires) delete entry.pendingWrite;
+    entry.update(entry.pendingWrite?.value ?? (entry.known ? entry.value : undefined) ?? new ActionError('inconclusive'));
+  }
+
+  async set(config: DeviceConfig, state: State, actionName: string, value: CharacteristicValue, entry?: CacheEntry, intent?: PendingWrite): Promise<void> {
     if (this.stopped) throw new ActionError('aborted');
     const action = config.urls?.[actionName];
     if (!action) return;
-    // invalidate older GETs before issuing a write so their responses cannot overwrite it
-    if (entry) entry.generation++;
+    intent ??= entry ? this.beginWrite(entry, value) : undefined;
     try {
       await this.actions.set(action, config, fingerprint(config), state, value);
+      if (entry && entry.pendingWrite === intent) intent!.expires = Date.now() + (config.writeConfirmationTimeout ?? this.settings.writeConfirmationTimeout ?? 10000);
+    } catch (error) {
+      if (entry && entry.pendingWrite === intent) {
+        delete entry.pendingWrite;
+        this.publish(entry);
+      }
+      throw error;
     } finally {
       if (entry) {
         // also invalidate reads started while the write was in progress
@@ -167,6 +278,7 @@ export class Runtime {
     return { ...this.stats, queue: this.coordinator.queue.length, inFlight: this.coordinator.active.size, limits: this.coordinator.limits,
       requests: { ...this.coordinator.stats, durations: [...this.coordinator.stats.durations] }, transport: { ...this.transport.stats },
       cache: [...this.entries.values()].map(e => ({ id: e.key.slice(0, 12), known: e.known, age: e.known ? now - e.lastSuccess : null, failures: e.failures, lastError: e.lastError, nextRefresh: Math.max(0, e.nextEligible - now), inFlight: e.inFlight })),
+      recovering: [...this.recovering].map(([origin, recovery]) => ({ id: fingerprint(origin).slice(0, 12), age: now - recovery.since, nextProbe: Math.max(0, recovery.nextProbe - now), attempts: recovery.attempts, category: recovery.category })),
       origins: [...this.coordinator.originStats].map(([origin, stats]) => ({id: fingerprint(origin).slice(0, 12), ...stats, inFlight: this.coordinator.origins.get(origin) ?? 0})) };
   }
 
@@ -201,7 +313,10 @@ const runtimes = new WeakMap<API, Runtime>();
 export function sharedRuntime(api: API, log: Logging): Runtime {
   let runtime = runtimes.get(api);
   if (!runtime) {
-    runtime = new Runtime(log, {}, api.user.persistPath());
+    // Homebridge's Logging methods use their receiver's public prefix and log method
+    // copy them onto a separate callable so accessory-specific logging stays untouched
+    const sharedLog: Logging = Object.assign((message: string, ...parameters: unknown[]) => sharedLog.info(message, ...parameters), log, { prefix: 'HTTP Advanced' });
+    runtime = new Runtime(sharedLog, {}, api.user.persistPath(), readGlobalSettings(api, sharedLog));
     runtimes.set(api, runtime);
     const instance = runtime;
     api.on('didFinishLaunching', () => { setImmediate(() => instance.start()); });

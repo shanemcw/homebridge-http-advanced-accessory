@@ -1,7 +1,7 @@
 {
   "displayName": "HTTP Advanced Accessory",
   "name": "homebridge-http-advanced-accessory",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.5",
   "description": "HTTP-backed HomeKit accessories with a shared background state cache and legacy configuration support",
   "license": "Apache-2.0",
   "keywords": [
@@ -21,6 +21,7 @@
     "url": "git+https://github.com/shanemcw/homebridge-http-advanced-accessory.git"
   },
   "dependencies": {
+    "@homebridge/plugin-ui-utils": "^2.2.6",
     "@xmldom/xmldom": "^0.9.12",
     "jsonpath-plus": "^10.4.0",
     "xpath": "0.0.34"
@@ -39,7 +40,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src test scripts --max-warnings=0",
+    "lint": "eslint src test scripts homebridge-ui --max-warnings=0",
     "test": "npm run build && node --test test/*.test.mjs",
     "benchmark": "npm run build && node scripts/benchmark.mjs",
     "check": "npm run typecheck && npm run lint && npm test",
@@ -55,7 +56,8 @@
     "README.md",
     "LICENSE",
     "docs",
-    "sample-config.json"
+    "sample-config.json",
+    "homebridge-ui"
   ],
   "bugs": {
     "url": "https://github.com/shanemcw/homebridge-http-advanced-accessory/issues"

@@ -4,7 +4,7 @@ export function validateDevice(config: DeviceConfig): void {
   if (!config || typeof config.name !== 'string' || !config.name.trim() || typeof config.service !== 'string') {
     throw new ActionError('config');
   }
-  for (const value of [config.forceRefreshDelay, config.setterDelay, config.uriCallsDelay]) {
+  for (const value of [config.forceRefreshDelay, config.setterDelay, config.uriCallsDelay, config.writeConfirmationTimeout]) {
     if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || value < 0)) throw new ActionError('config');
   }
   for (const value of Object.values(config.refresh ?? {})) {
@@ -25,6 +25,11 @@ function validateAction(action: ActionConfig, seen: Set<ActionConfig>): void {
   if (!/^[A-Za-z]+$/.test(action.httpMethod || 'GET')) throw new ActionError('config');
   if (action.body !== undefined && typeof action.body !== 'string') throw new ActionError('config');
   if (action.timeout !== undefined && (!Number.isFinite(action.timeout) || action.timeout <= 0)) throw new ActionError('config');
+  if (action.requireResponseMatch !== undefined && typeof action.requireResponseMatch !== 'boolean') throw new ActionError('config');
+  if (action.responsePattern !== undefined) {
+    if (typeof action.responsePattern !== 'string') throw new ActionError('config');
+    try { new RegExp(action.responsePattern); } catch { throw new ActionError('config'); }
+  }
   if (action.mappers !== undefined && !Array.isArray(action.mappers)) throw new ActionError('config');
   for (const mapper of action.mappers ?? []) {
     if (!mapper || !mapper.parameters) throw new ActionError('config');

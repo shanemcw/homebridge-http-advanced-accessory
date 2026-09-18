@@ -2,22 +2,25 @@ import http from 'node:http';
 import https from 'node:https';
 import { ActionError, type ActionConfig, type DeviceConfig } from './types.js';
 import { Coordinator } from './coordinator.js';
+import type { GlobalSettings } from './settings.js';
 
-export interface HTTPResult { body: string; status: number; location?: string }
+export interface HTTPResult { body: string; status: number; location?: string; retryAfter?: string }
 export class Transport {
   private readonly httpAgent = new http.Agent({ keepAlive: true, maxSockets: 4, maxFreeSockets: 2 });
   private readonly httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 4, maxFreeSockets: 2 });
   readonly stats = { timeouts: 0, httpErrors: 0, aborted: 0, bytes: 0 };
-  constructor(readonly coordinator: Coordinator) {}
+  constructor(readonly coordinator: Coordinator, readonly defaults: GlobalSettings = {}) {}
 
-  async request(action: ActionConfig, config: DeviceConfig, owner: string, priority = false, depth = 0, deadline = Date.now() + (action.timeout ?? 10000)): Promise<HTTPResult> {
+  async request(action: ActionConfig, config: DeviceConfig, owner: string, priority = false, depth = 0, deadline: number | undefined = priority ? Date.now() + (action.timeout ?? this.defaults.requestTimeout ?? 10000) : undefined): Promise<HTTPResult> {
     if (depth > 10) throw new ActionError('http');
     let url: URL;
     try { url = new URL(action.url); } catch { return Promise.reject(new ActionError('config')); }
     if (!['http:', 'https:'].includes(url.protocol)) return Promise.reject(new ActionError('config'));
-    const result = await this.coordinator.submit(url.origin, owner, config.uriCallsDelay || 0, priority, async signal => {
+    const result = await this.coordinator.submit(url.origin, owner, config.uriCallsDelay ?? this.defaults.uriCallsDelay ?? 0, priority, async signal => {
+      // background work gets its request budget when admitted, including subsequent redirects
+      deadline ??= Date.now() + (action.timeout ?? this.defaults.requestTimeout ?? 10000);
       const remaining = deadline - Date.now();
-      if (remaining <= 0) { this.stats.timeouts++; throw new ActionError('timeout'); }
+      if (remaining <= 0) throw new ActionError('timeout');
       const controller = new AbortController();
       const abort = () => controller.abort(new ActionError('aborted'));
       signal.addEventListener('abort', abort, { once: true });
@@ -34,7 +37,7 @@ export class Transport {
       } catch (error) {
         if (controller.signal.aborted) {
           const reason = controller.signal.reason as ActionError;
-          if (reason.category === 'timeout') this.stats.timeouts++; else this.stats.aborted++;
+          if (reason.category !== 'timeout') this.stats.aborted++;
           throw reason;
         }
         throw error instanceof ActionError ? error : new ActionError('network');
@@ -42,6 +45,9 @@ export class Transport {
         clearTimeout(timer);
         signal.removeEventListener('abort', abort);
       }
+    }, deadline).catch(error => {
+      if (error instanceof ActionError && error.category === 'timeout') this.stats.timeouts++;
+      throw error;
     });
     const method = (action.httpMethod || 'GET').toUpperCase();
     if ([301, 302, 303, 307, 308].includes(result.status) && result.location && ['GET', 'HEAD'].includes(method)) {
@@ -57,7 +63,19 @@ export class Transport {
     }
     if (result.status < 200 || result.status >= 300) {
       this.stats.httpErrors++;
-      if (action.strictHTTP) throw new ActionError('http');
+      // an explicit retry signal is an outage, never a device value or a successful write
+      if ([429, 503].includes(result.status) && result.retryAfter !== undefined) {
+        const seconds = Number(result.retryAfter);
+        const delay = result.retryAfter.trim() && Number.isFinite(seconds) ? seconds * 1000 : Date.parse(result.retryAfter) - Date.now();
+        throw new ActionError('unavailable', Number.isFinite(delay) ? Math.max(0, Math.min(300000, delay)) : undefined);
+      }
+      if (action.strictHTTP) throw new ActionError([408, 429, 500, 502, 503, 504].includes(result.status) ? 'unavailable' : 'http');
+    }
+    if (action.responsePattern !== undefined) {
+      let pattern: RegExp;
+      try { pattern = new RegExp(action.responsePattern); } catch { throw new ActionError('config'); }
+      // fixed legacy protocols can identify valid replies without changing their server
+      if (!pattern.test(result.body)) throw new ActionError('inconclusive');
     }
     return result;
   }
@@ -78,7 +96,7 @@ export class Transport {
         response.on('error', reject);
         response.on('end', () => {
           this.stats.bytes += size;
-          resolve({ body: Buffer.concat(chunks).toString('utf8'), status: response.statusCode ?? 0, location: response.headers.location });
+          resolve({ body: Buffer.concat(chunks).toString('utf8'), status: response.statusCode ?? 0, location: response.headers.location, retryAfter: response.headers['retry-after'] });
         });
       });
       request.on('error', reject);

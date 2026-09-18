@@ -95,12 +95,17 @@ export class DeviceAdapter {
       }
       if (config.urls?.[setName]) {
         characteristic.onSet(async value => {
-          const restore = () => { if (entry?.known && entry.value !== undefined) characteristic.updateValue(entry.value); };
+          const intent = entry ? runtime.beginWrite(entry, value) : undefined;
           const work = async () => {
-            try { await runtime.set(config, this.state, setName, value, entry); }
-            catch { restore(); throw new api.hap.HapStatusError(api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE); }
+            try { await runtime.set(config, this.state, setName, value, entry, intent); }
+            catch { throw new api.hap.HapStatusError(api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE); }
+            finally {
+              // HAP stores each completed write's value; a later intent must win
+              if (entry) setImmediate(() => runtime.publish(entry!));
+            }
           };
-          if (config.setterDelay) runtime.debounce(fingerprint([identity, setName]), config.setterDelay, work, restore);
+          const setterDelay = config.setterDelay ?? runtime.settings.setterDelay;
+          if (setterDelay) runtime.debounce(fingerprint([identity, setName]), setterDelay, work);
           else await work();
         });
       }

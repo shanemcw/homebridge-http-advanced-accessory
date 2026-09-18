@@ -1,20 +1,45 @@
 # HTTP Advanced Accessory
 
-Bridge HTTP-controlled devices into HomeKit using Homebridge. Configure a service, its getter/setter URLs, and optional response transformations. The Alpha adds a shared background state cache, bounded HTTP scheduling, and an optional dynamic platform.
+Connect HTTP-controlled devices and web services to Apple Home through Homebridge.
 
-**2.0.0-alpha.1 is a development prerelease candidate. Public release is gated by the validation checklist in [the implementation report](docs/implementation-report.md).** Stable users remain on 1.3.0 until they explicitly opt in. Existing `HttpAdvancedAccessory` configurations remain supported without rewriting them on the supported runtime matrix.
+**A non-breaking modernization of the existing accessory configuration model, with an optional platform when you choose to migrate.** Keep your `HttpAdvancedAccessory` entries, encoded command URLs, request bodies, hand-written mappings and other settings. The improvements apply to existing accessories without converting them to a platform or upgrading their web server.
 
-## Runtime requirements
+- **Faster HomeKit reads:** shared cached state lets Apple Home read device status promptly while HTTP refreshes run in the background.
+- **More resilient HTTP handling:** bounded requests, background recovery and quieter logs accommodate slow or temporarily unavailable servers, including older systems you cannot change.
+- **Migration at your pace:** maintain existing accessories through JSON Config, and add platform devices alongside them when useful. The plugin also keeps a requested switch state visible while the server catches up, avoiding a brief reversal caused by stale reads.
 
-- Node.js 22.13 or later in the 22.x line, or Node.js 24.x.
-- Homebridge 1.11.4 or later in the 1.x line, or Homebridge 2.4 or later in the 2.x line.
-- Older Node/Homebridge versions continue to use plugin 1.3.0. Upgrade Homebridge's runtime before testing this Alpha.
+**Release status: `2.0.0-alpha.5` is a prerelease candidate.** Compatibility applies on the supported runtimes below. Refresh timing changes, and voluntarily converting a device to the platform creates a new HomeKit identity. [Compatibility details](docs/modernization.md#what-non-breaking-means-here) explain those boundaries.
 
-The package uses TypeScript compiled to ESM and the HAP API supplied by Homebridge. It does not load or bundle a second HAP runtime. The tested versions and remaining validation are recorded in [the report](docs/implementation-report.md).
+[User guide](#user-guide) · [Modernization details](#modernization-details) · [Developer reference](docs/modernization.md#development-and-release-policy) · [Beta readiness](docs/beta-readiness.md)
 
-## Existing accessory configuration
+## User guide
 
-Keep existing entries in `accessories[]`, including their names and service definitions:
+### Requirements
+
+| Component | Supported versions |
+|---|---|
+| Node.js | 22.13 or later in the 22.x line, or 24.x |
+| Homebridge | 1.11.4 or later in the 1.x line, or 2.4 or later in the 2.x line |
+
+Older environments need a runtime upgrade before testing this Alpha. Plugin 1.3.0 is the stable compatibility baseline. If you also upgrade Homebridge itself, check the [service compatibility list](docs/service-support.md) for historical services removed by newer HAP versions.
+
+### Install or upgrade
+
+Back up Homebridge first, including configuration, cached accessories and pairing data. Install the reviewed Alpha package into the **same plugin location your Homebridge installation already uses**, then restart Homebridge. Keep your existing accessory definitions and Homebridge storage in place.
+
+For this unpublished testing candidate, use the supplied `.tgz` archive. npm remains on stable 1.3.0. For example, on a server that keeps plugins in `/var/lib/homebridge`, run as the account that owns that installation:
+
+```sh
+npm install --prefix /var/lib/homebridge --omit=dev --ignore-scripts /path/to/homebridge-http-advanced-accessory-2.0.0-alpha.5.tgz
+```
+
+Use your installation's actual path; installations with globally managed plugins should use their normal plugin-management workflow. If an Alpha is later published to npm, explicitly select that version through Homebridge UI or your usual package manager. Test device control, state updates and existing automations after restarting.
+
+After a manual package installation, if the plugin's JSON menu still identifies it only as a platform, restart the complete Homebridge service/UI so its cached plugin metadata reloads.
+
+### Keep using existing accessories
+
+Existing devices stay in `accessories[]`. No configuration rewrite is required to obtain the cache and recovery improvements. A basic definition looks like this:
 
 ```json
 {
@@ -28,176 +53,113 @@ Keep existing entries in `accessories[]`, including their names and service defi
 }
 ```
 
-Keep your Homebridge storage, bridge identity and accessory names when upgrading. The legacy registration name, service ordering and characteristic identities are preserved; tests reuse HAP's identifier cache across replacement instances. This ordinary upgrade is separate from moving a device to platform configuration.
+Keep each existing accessory's name, alias and service definition unchanged when upgrading to preserve its identity. Your existing GET/POST methods, bodies, encoded strings, mapper chains, optional characteristics and property settings remain supported. See the [action and HTTP reference](docs/modernization.md#actions-and-http), [mapper reference](docs/modernization.md#mappers) and [legacy examples](docs/legacy-reference.md) for more elaborate configurations.
 
-## Optional platform configuration
+### Maintain configuration in the UI or JSON
 
-New installations can use one `HttpAdvanced` entry in `platforms[]`:
+The plugin settings screen brings three areas together:
+
+| Area | What you maintain |
+|---|---|
+| **Legacy accessories** | An accessory count and expandable name list, with directions to **JSON Config** for individual editing. |
+| **Shared settings** | Timing, request limits and recovery defaults for both accessories and platforms. |
+| **Optional platforms** | Separate platform definitions, with an enable checkbox for each. |
+
+To edit, add or delete a legacy accessory, choose **JSON Config** from the plugin menu. Each accessory has its own bounded JSON editor, including custom fields, encoded commands and mappings. **Back to plugin menu** closes Plugin Config after you save any pending changes.
+
+Choose **Save all settings** inside Plugin Config to save shared settings and optional platforms, then restart Homebridge to apply changes. Legacy accessory definitions stay unchanged. A changed save keeps a private configuration backup and preserves unrelated plugins and bridge settings. Avoid editing the same configuration from multiple windows at once.
+
+You can also maintain `config.json` directly through Homebridge's JSON editor. Existing entries remain in `accessories[]`; platform entries use `platforms[]`; shared defaults use the top-level `httpAdvanced` object. Simply opening the UI or starting the plugin does not migrate or rewrite your configuration.
+
+### Add a platform when you choose
+
+Use **Also use as a platform** in the settings screen, or add an `HttpAdvanced` entry to `platforms[]`. You can start with a new device while keeping all existing accessories as they are:
 
 ```json
 {
   "platform": "HttpAdvanced",
   "name": "HTTP Advanced",
-  "coordinator": { "concurrency": 4, "perOrigin": 2, "maxQueue": 256 },
+  "enabled": true,
   "devices": [
     {
-      "id": "example-switch",
-      "name": "Example Switch",
+      "id": "new-platform-light",
+      "name": "New Platform Light",
       "service": "Switch",
-      "refresh": { "activeInterval": 5, "idleInterval": 60, "idleAfter": 60 },
       "urls": {
-        "getOn": { "url": "http://device.example/state" },
-        "setOn": { "url": "http://device.example/set/{value}" }
+        "getOn": { "url": "http://another-device.example/state" },
+        "setOn": { "url": "http://another-device.example/set/{value}" }
       }
     }
   ]
 }
 ```
 
-The platform restores cached accessories and removes obsolete ones only after successful inventory validation. Set a permanent `id` before pairing if you want to rename the device later. Otherwise its initial name is its identity. Keep the platform name stable. Invalid or duplicate inventories preserve cached accessories and report an error.
+Choose a permanent device `id` before pairing, and keep the platform name stable. The device's display name can then change without changing its platform identity. Disabling a platform keeps its definitions and cached identities but stops device updates.
 
-Legacy and platform definitions can coexist for **different devices**. Do not define the same device in both places: voluntary conversion uses different accessory UUIDs and may require rebuilding HomeKit assignments. There is no automatic migration tool. See [migration and rollback](docs/migration.md).
+**Accessories and platforms can coexist for different devices.** Do not define the same physical device in both places. Moving an existing accessory into a platform is an optional, deliberate conversion: it creates a different HomeKit identity and may require reassigning rooms, scenes and automations. There is no automatic identity-preserving migration tool in this Alpha. Follow the [migration guide](docs/migration.md) if you choose to convert devices.
 
-The schema provides platform settings. Arbitrary action-name maps, mapper parameters, property overrides and recursive fallback definitions remain available in Homebridge's JSON editor. Do not use the platform form to replace existing legacy blocks. The plugin never writes `config.json`.
+### Tune shared settings
 
-## How reads and freshness work
-
-HomeKit GETs read memory immediately. They do not wait for HTTP, retries, a queue, or another device. Unknown state returns HomeKit's communication error until the first usable refresh; an existing last-known value is returned while refreshing or recovering from failure.
-
-A single scheduler serves both adapters. Default bounds are four total requests, two per origin, and 256 waiting requests. GETs for the same action never overlap. Overdue actions are serviced before recently refreshed ones, and eligible origins rotate. SETs have queue priority. Connections are reused.
-
-| Setting | Unit | Behavior |
-|---|---|---|
-| `forceRefreshDelay` | seconds | Positive values retain explicit polling intervals; default 0 selects adaptive refresh. |
-| `refresh.activeInterval` | seconds | Default 5 after startup and while reads are active. |
-| `refresh.idleAfter` | seconds | Default 60 without a HomeKit read before switching to idle cadence. |
-| `refresh.idleInterval` | seconds | Default 60 for idle devices. |
-| `setterDelay` | milliseconds | Default 0. Positive values acknowledge immediately and debounce each characteristic; last write wins. |
-| `uriCallsDelay` | milliseconds | Default 0. Minimum spacing between this device's request starts, including GETs, SETs and fallbacks. |
-
-Intervals run after request completion, with up to 10% positive jitter. Startup acquisition is spread across the first second. Explicit polling is not shortened by HomeKit reads. With adaptive refresh, a stale read makes work eligible for a later scheduler tick (100 ms resolution); it still returns memory state. Errors back off exponentially up to five minutes plus jitter. Error fallback values also back off, so a working `resultOnError` cannot create a retry storm.
-
-This changes the acquisition timing of `forceRefreshDelay: 0`: old versions fetched on demand, while Alpha learns state ahead of reads. It introduces bounded background traffic and finite staleness. Measure both freshness and load for your devices; very slow fleets can exceed the nominal interval. A 500-second configured interval still allows approximately 500 seconds of staleness. No cache promises mathematically instantaneous remote state.
-
-Successful reads update HAP using `updateValue`, never a setter. Last successful values and timestamps are stored under Homebridge's persistence directory and restored only for an identical configuration fingerprint. Cache files contain values and hashes, not action URLs or credentials. A missing/corrupt cache is ignored. Persistence is periodic and at graceful shutdown; a crash can lose recent cache updates.
-
-## Actions and HTTP
-
-Action keys combine `get` or `set` with a characteristic name, such as `getOn`, `setBrightness`, or `getSecuritySystemTargetState`. Canonical HAP names are resolved by UUID; historical compact display names remain accepted.
-
-Each action supports:
-
-- `url`: HTTP or HTTPS endpoint.
-- `httpMethod`: defaults to `GET`; legacy POST bodies and GET bodies are supported.
-- `body`: string, sent without implicit JSON/form serialization.
-- `headers`: optional explicit headers, including Content-Type if your endpoint requires one.
-- `mappers`: ordered transformation chain.
-- `resultOnError`: getter value returned on transport failure, bypassing mappers. Zero, false and empty string are valid fallbacks.
-- `inconclusive`: another getter action when the mapped result is the string `"inconclusive"`. Up to 32 actions are allowed; cycles are rejected.
-- `timeout`: total milliseconds including queueing, response body and redirects; default 10000.
-- `strictHTTP`: default false. True treats non-2xx responses as errors.
-
-For compatibility, non-2xx response bodies are mapped by default, as in 1.3.0. Status errors are counted separately in diagnostics. Enable `strictHTTP` to make these responses fail and use `resultOnError`. GET/HEAD redirects are followed (up to ten); each hop goes through the coordinator. Credentials and cookies are removed on cross-origin redirects. POST redirects are not automatically followed, matching legacy defaults. Responses are limited to 8 MiB to bound memory use.
-
-Set `username` and `password` on a device for Basic Auth. Supplied credentials are sent immediately, including when legacy `immediately: false` is present: 1.3.0's explicit Authorization header already overrode that setting. Alpha preserves that behavior. Without credentials, Alpha omits the old empty `Basic Og==` header. Credentials embedded in a URL are also handled by Node's HTTP client. Use HTTPS for sensitive endpoints.
-
-## SETs and templates
-
-SETs apply mappers to the outgoing HomeKit value, expand templates, and send the request. A normal SET resolves after the HTTP operation; failures surface as a HomeKit error. `setterDelay` retains legacy immediate acknowledgement, so a later failure can only be logged and the cached value restored. Successful writes make an authoritative getter verification eligible immediately. Older in-flight GETs cannot overwrite the result of a newer SET.
-
-`{value}` (case-insensitive) substitutes the **mapped** value. Legacy JavaScript template expressions see the original `value` and characteristic `state`:
+The built-in defaults work with either configuration style; no platform is required. Leave UI fields blank to use them, or add the following top-level object to your existing `config.json`:
 
 ```json
 {
-  "url": "http://device.example/set/${value}?mapped={value}",
-  "httpMethod": "POST",
-  "body": "temperature=${state.getTargetTemperature * 9/5 + 32}"
+  "httpAdvanced": {
+    "requestTimeout": 10000,
+    "uriCallsDelay": 0,
+    "setterDelay": 0,
+    "writeConfirmationTimeout": 10000,
+    "refresh": { "activeInterval": 5, "idleInterval": 60, "idleAfter": 60 },
+    "coordinator": { "concurrency": 4, "perOrigin": 2, "maxQueue": 256 },
+    "recovery": { "retryInterval": 5, "maxRetryInterval": 30, "quietPeriod": 90, "reminderInterval": 300 }
+  }
 }
 ```
 
-Expressions are available in setter URLs and bodies. Getter URLs/bodies remain literal, matching 1.3.0. `state.getOn`, `state.getTargetTemperature`, etc. retain the legacy mapper-output types; polling converts numeric characteristics as before.
+Request timeout, request spacing, debounce and write confirmation are **milliseconds**. Refresh and recovery intervals are **seconds**. Existing device/action overrides take precedence over their shared defaults; positive legacy `forceRefreshDelay` still controls the normal polling interval.
 
-## Mappers
+| If you need to… | Setting to consider |
+|---|---|
+| Allow a slow background HTTP response more time | Increase `requestTimeout`; an individual action's `timeout` overrides it. This does not extend HomeKit's own request budget. |
+| Space requests to an older server | Increase `uriCallsDelay`, or reduce the shared `coordinator.perOrigin` limit. |
+| Allow the server more time to reflect a successful command | Adjust `writeConfirmationTimeout`; the default is 10000 ms after HTTP success. |
+| Combine a burst of changes into the last command | Set `setterDelay` to a positive debounce delay. |
+| Balance freshness with background traffic | Adjust `refresh.activeInterval` and `refresh.idleInterval`, or retain a device's explicit `forceRefreshDelay`. |
 
-A chain feeds each mapper's output into the next. Getter mappers consume response text; setter mappers consume the outgoing HomeKit value.
+Shared defaults also apply to legacy child bridges. [The technical reference](docs/modernization.md#shared-settings-and-precedence) covers precedence, units and scheduling boundaries.
 
-| Type | Parameters | Semantics |
-|---|---|---|
-| `static` | `mapping` object | Lookup by input value; unmatched values pass through. Legacy falsey mapped values (`0`, `false`, `""`) also pass through. Use strings `"0"`/`"1"` for numeric state or an eval expression for an intentional falsey result. |
-| `regex` | `regexp`, `capture` (default `"1"`) | Return the selected capture, or original input when unmatched. |
-| `xpath` | `xpath`, `index` (default 0) | XPath text-node selection or string expression. Select `/text()` or `string(...)`, not entire elements. |
-| `jpath` | `jpath`, `index` (default 0) | JSONPath selection, indexed result, objects/arrays serialized as JSON. Malformed or non-object JSON returns `"inconclusive"`. |
-| `eval` | `expression` | Execute the legacy JavaScript expression with `value`, `self.state`, and `this.state`. |
+### What to expect in Apple Home
 
-```json
-[
-  { "type": "jpath", "parameters": { "jpath": "$.u", "index": 0 } },
-  { "type": "static", "parameters": { "mapping": { "0": "0", "1": "1", "unset": "0" } } }
-]
-```
+Device reads return the latest known state promptly. Background HTTP requests refresh it independently, so a fast HomeKit response can still contain an older observation. On startup, a device without saved or newly acquired state reports a communication error until its first usable response.
 
-**Eval and `${...}` templates execute trusted configuration as JavaScript with the privileges of Homebridge. They are not sandboxed.** Do not paste untrusted expressions. Evaluation is isolated in the compatibility module and exceptions are contained; a deliberately nonterminating expression can still block Node. JSONPath uses the maintained library's safe filter evaluator; exotic executable legacy JSONPath scripts need individual compatibility verification.
+When you change a value, the plugin keeps the requested value visible during debounce and the HTTP request, then for up to ten seconds by default while waiting for confirmation. A matching getter response ends that window early. If the command fails or the window expires, HomeKit returns to the latest observed state, or an error if none is known. This handles servers that acknowledge a command before reporting its new state. Failed commands are never automatically replayed.
 
-Malformed XML, invalid values, expression failures and exhausted numeric/boolean `inconclusive` results produce contained action failures. They cannot leave a getter callback waiting indefinitely. Numeric HAP formats are converted deliberately; unsupported values are rejected rather than cached as valid state.
+During a temporary outage, the plugin retries background reads with backoff and keeps known state available, unless your configuration explicitly supplies an error fallback. Short interruptions stay quiet in normal logs. Default outage warnings start after 90 seconds, with reminders at most every five minutes. Recovery can continue beyond 30 seconds; the plugin does not require a gateway upgrade or special retry headers.
 
-## Services, optional characteristics and props
+### Troubleshooting and rollback
 
-`service` uses the Homebridge HAP service name. `BatteryService` aliases `Battery`. Removed historical HAP services produce an explicit unsupported-service error; consult [the service inventory](docs/service-support.md). The old `HomeKitExtensionTypes.js` was never loaded by the plugin entry point and did not provide a working configuration feature.
+| Symptom | Check first |
+|---|---|
+| Unknown state after startup | Endpoint reachability and getter mapper output. |
+| State is older than expected | Refresh interval, cache age, queue depth and outage backoff. |
+| A toggle returns to its old state | Whether the write failed, the server applied it, or the confirmation window expired. |
+| Busy/error text becomes an unexpected value | The mapper chain and optional `responsePattern`, `requireResponseMatch` or `strictHTTP` settings. See [servers you cannot change](docs/modernization.md#servers-you-cannot-change). |
+| Configuration does not load | Service support, action names, mapper syntax and duplicate platform IDs. |
 
-`optionCharacteristic` selects optional characteristics in HAP's original service order. `props` overrides properties by canonical or legacy compact name:
+Set `debug: true` on one device to enable a shared diagnostic snapshot every 30 seconds. It includes request timing, queue usage, cache ages and recovery status. Shared messages use **HTTP Advanced** as their log prefix; device-specific messages retain their accessory name. Diagnostics omit URLs, credentials, request bodies and device values, and are not sent externally.
 
-```json
-{
-  "service": "Lightbulb",
-  "optionCharacteristic": ["Brightness", "Hue", "Saturation"],
-  "props": { "Brightness": { "minValue": 0, "maxValue": 100, "minStep": 1 } }
-}
-```
+For a report, include plugin, Homebridge and Node versions plus sanitized diagnostics. The [measurement guide](docs/performance.md) explains how to compare responsiveness and freshness together.
 
-The legacy adapter retains the fixed Manufacturer, Model and SerialNumber values exposed by 1.3.0; its previously ignored `manufacturer`/`model` keys remain accepted. The platform honors these metadata settings. All historical extended examples (security system, contact sensor, Daikin, Yamaha and lightbulb) remain in [the legacy reference](docs/legacy-reference.md).
+To roll back, reinstall the 1.3.0 baseline through the same plugin-management path and restart Homebridge. Legacy-only users retain their definitions and storage. If you introduced platform devices, follow the [rollback instructions](docs/migration.md#rollback) and use the relevant backup. Preserve pairing and identifier storage during an ordinary plugin rollback.
 
-## Alpha installation and rollback
+## Modernization details
 
-Once the Alpha tag has been published, explicitly select it in Homebridge UI or run in your Homebridge installation environment:
+The [modernization and developer reference](docs/modernization.md) contains the fine print:
 
-```sh
-npm install -g homebridge-http-advanced-accessory@alpha
-```
+- What compatibility preserves, and which runtime behaviors change.
+- Shared caching, persistence, polling, request scheduling and outage recovery.
+- HTTP actions, older-server response handling, writes, templates and all five mapper types.
+- Service support, optional characteristics, configuration editing and platform lifecycle.
+- Benchmark interpretation, development commands, test coverage and release policy.
 
-Back up Homebridge before testing. Restart Homebridge after installing. Leave existing legacy configuration and Homebridge storage unchanged. For an unpublished local candidate, install the reviewed tarball on a separate test instance first.
-
-To roll back to the verified stable baseline:
-
-```sh
-npm install -g homebridge-http-advanced-accessory@1.3.0
-```
-
-Restart Homebridge. Platform definitions are Alpha-only: remove them and restore the backed-up legacy configuration if you had explicitly migrated. Do not delete Homebridge pairing or identifier storage during an ordinary plugin rollback.
-
-## Troubleshooting and diagnostics
-
-Set `debug: true` on one device to log a shared diagnostic snapshot every 30 seconds. It reports queue depth/high-water mark, concurrency, sampled request durations, cache ages, failure categories, next eligible refresh times and state-change counts. URLs, credentials, bodies, values and raw exception messages are omitted. Diagnostics are local; nothing is sent externally.
-
-- Unknown startup state: wait for initial acquisition; check endpoint reachability and mapper output.
-- Old values: inspect cache age, explicit refresh interval, queue depth and backoff before increasing concurrency.
-- Slow writes: inspect backend latency and `setterDelay`/`uriCallsDelay`.
-- Configuration error: inspect service names, action shapes and mapper syntax. Failed devices are isolated; invalid platform inventory is not reconciled destructively.
-- Unexpected mapper result: remember legacy static falsey behavior and JSONPath object serialization.
-
-Use [the measurement guide](docs/performance.md) to compare bulk-read latency and freshness. Include plugin/Homebridge/Node versions and sanitized diagnostics in reports, never your unredacted configuration.
-
-## Development and release policy
-
-```sh
-npm ci
-npm run check
-HB_TEST_VERSION=1 npm test
-npm run benchmark -- --save
-npm pack --dry-run
-```
-
-CI exercises Node 22/24 and real Homebridge v1/v2 HAP implementations. Unit/integration tests use only loopback fake servers. `legacy-plugin` is a test-only alias of published 1.3.0; its obsolete dependencies are excluded from production installation and the tarball. `npm audit --omit=dev` audits the maintained runtime separately.
-
-The first release must use `npm publish --tag alpha` and a GitHub prerelease. `publishConfig.tag` and the publish guard prevent accidental use of `latest`. No automatic publishing workflow is enabled. Stable requires broader device, restart and real-installation evidence, not merely one working household fixture.
-
-The existing Apache-2.0 LICENSE remains unchanged. Package metadata is reconciled to that file, which has existed since the initial commit; historical authorship is retained and the current maintainer is credited.
+The [Alpha release notes](docs/alpha-release-notes.md) summarize this candidate; the [implementation report](docs/implementation-report.md) records validation and remaining release gates. The project retains its existing [Apache-2.0 license](LICENSE) and historical authorship.

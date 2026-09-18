@@ -8,8 +8,8 @@ const require = createRequire(import.meta.url);
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 export const silentLog = Object.assign(() => {}, {info() {}, warn() {}, error() {}, debug() {}});
 export async function until(predicate, timeout = 5000) {
-  const deadline = Date.now() + timeout;
-  while (!predicate()) { if (Date.now() > deadline) throw new Error('Timed out waiting for condition'); await sleep(5); }
+  const deadline = performance.now() + timeout;
+  while (!predicate()) { if (performance.now() > deadline) throw new Error('Timed out waiting for condition'); await sleep(5); }
 }
 export async function fakeServer(t, handler = (_req, res) => res.end('1')) {
   const requests = [];
@@ -33,7 +33,7 @@ export async function makeAPI(t, version = process.env.HB_TEST_VERSION || '2') {
   const {HomebridgeAPI} = await import(pathToFileURL(join(root, 'api.js')).href);
   const api = new HomebridgeAPI();
   const storage = mkdtempSync(join(tmpdir(), 'http-advanced-test-'));
-  api.user = {persistPath: () => storage};
+  api.user = {persistPath: () => storage, configPath: () => join(storage, 'config.json')};
   api.registrations = []; api.updates = []; api.removals = [];
   api.registerPlatformAccessories = (_plugin, _platform, accessories) => api.registrations.push(...accessories);
   api.updatePlatformAccessories = accessories => api.updates.push(...accessories);

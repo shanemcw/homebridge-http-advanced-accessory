@@ -2,11 +2,12 @@ import type { API, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformCo
 import { DeviceAdapter, serviceConstructor } from './accessory.js';
 import { validateDevice } from './config.js';
 import { sharedRuntime } from './runtime.js';
+import { validateSettings } from './settings.js';
 import type { CoordinatorConfig, DeviceConfig } from './types.js';
 
-export const pluginName = 'homebridge-http-advanced-accessory';
-export const platformName = 'HttpAdvanced';
-export interface HTTPPlatformConfig extends PlatformConfig { devices?: DeviceConfig[]; coordinator?: CoordinatorConfig }
+import { pluginName, platformName } from './metadata.js';
+export { pluginName, platformName } from './metadata.js';
+export interface HTTPPlatformConfig extends PlatformConfig { enabled?: boolean; devices?: DeviceConfig[]; coordinator?: CoordinatorConfig }
 
 export class HTTPPlatform implements DynamicPlatformPlugin {
   private readonly cached = new Map<string, PlatformAccessory>();
@@ -16,10 +17,29 @@ export class HTTPPlatform implements DynamicPlatformPlugin {
 
   configureAccessory(accessory: PlatformAccessory): void { this.cached.set(accessory.UUID, accessory); }
 
+  private unavailable(): void {
+    const fail = () => { throw new this.api.hap.HapStatusError(this.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE); };
+    for (const accessory of this.cached.values()) {
+      for (const service of accessory.services) {
+        if (service.UUID === this.api.hap.Service.AccessoryInformation.UUID) continue;
+        for (const characteristic of service.characteristics) {
+          if (characteristic.UUID === this.api.hap.Characteristic.Name.UUID) continue;
+          if (characteristic.props.perms.includes(this.api.hap.Perms.PAIRED_READ)) characteristic.onGet(fail);
+          if (characteristic.props.perms.includes(this.api.hap.Perms.PAIRED_WRITE)) characteristic.onSet(fail);
+        }
+      }
+    }
+  }
+
   discover(): void {
+    // disabling a platform retains its configuration and cached HomeKit identities
+    if (this.config.enabled === false) { this.unavailable(); return; }
+    if (this.config.enabled !== undefined && typeof this.config.enabled !== 'boolean') {
+      this.unavailable(); this.log.error('HTTP Advanced platform enabled must be true or false; cached accessories retained'); return;
+    }
     // validate the whole inventory before reconciling so malformed configuration cannot remove devices
     const devices = this.config.devices;
-    if (!Array.isArray(devices)) { this.log.error('HTTP Advanced platform requires a devices array'); return; }
+    if (!Array.isArray(devices)) { this.unavailable(); this.log.error('HTTP Advanced platform requires a devices array'); return; }
     const desired = new Map<string, DeviceConfig>();
     try {
       for (const device of devices) {
@@ -31,13 +51,17 @@ export class HTTPPlatform implements DynamicPlatformPlugin {
         desired.set(UUID, device);
       }
     } catch (error) {
+      this.unavailable();
       const unsupported = error instanceof Error && error.message.startsWith('HTTP Advanced unsupported HomeKit service:');
       this.log.error(unsupported ? `${error.message}; cached accessories retained` : 'HTTP Advanced platform inventory invalid or contains duplicate IDs; cached accessories retained');
       return;
     }
     const runtime = sharedRuntime(this.api, this.log);
-    try { runtime.coordinator.configure(this.config.coordinator ?? {}); }
-    catch { this.log.error('HTTP Advanced invalid coordinator limits; cached accessories retained'); return; }
+    try {
+      if (this.config.coordinator !== undefined) validateSettings({ coordinator: this.config.coordinator });
+      runtime.coordinator.configure(this.config.coordinator ?? {});
+    }
+    catch { this.unavailable(); this.log.error('HTTP Advanced invalid coordinator limits; cached accessories retained'); return; }
     let failed = false;
     for (const [UUID, device] of desired) {
       try {

@@ -96,3 +96,42 @@ test('sanitized 44-device fixture preserves all delay and mapper variants withou
   assert.equal(runtime.entries.size,44);assert.equal([...runtime.entries.values()].filter(e=>e.config.forceRefreshDelay===500).length,3);
   assert.equal(JSON.stringify(devices),original);
 });
+
+test('serialized platform lifecycle preserves identity through disable and re-enable, then removes explicitly',async t=>{
+  const server=await fakeServer(t,(req,res)=>res.end(req.url.startsWith('/set')?'OK':'1'));
+  const config={platform:'HttpAdvanced',name:'Lifecycle',enabled:true,devices:[{id:'stable-id',name:'Original',service:'Switch',urls:{getOn:{url:server.url},setOn:{url:server.url+'/set/{value}'}}}]};
+  const firstAPI=await makeAPI(t);
+  new HTTPPlatform(silentLog,config,firstAPI).discover();
+  const original=firstAPI.registrations[0];
+  const firstRuntime=sharedRuntime(firstAPI,silentLog);
+  await firstRuntime.refresh([...firstRuntime.entries.values()][0]);
+  // use Homebridge's real persistence format, not an in-memory object with old handlers
+  original._associatedPlugin='homebridge-http-advanced-accessory';original._associatedPlatform='HttpAdvanced';
+  const saved=JSON.parse(JSON.stringify(firstAPI.platformAccessory.serialize(original)));
+  firstAPI.emit('shutdown');
+  const restore=api=>api.platformAccessory.deserialize(structuredClone(saved));
+  const disabledAPI=await makeAPI(t);const disabledAccessory=restore(disabledAPI);
+  const disabled=new HTTPPlatform(silentLog,{...config,enabled:false},disabledAPI);disabled.configureAccessory(disabledAccessory);disabled.discover();
+  const off=disabledAccessory.getService(disabledAPI.hap.Service.Switch).getCharacteristic(disabledAPI.hap.Characteristic.On);
+  const before=server.requests.length;
+  await assert.rejects(off.handleGetRequest());await assert.rejects(off.handleSetRequest(false));
+  assert.equal(server.requests.length,before);assert.equal(disabledAPI.removals.length,0);
+  assert.equal(disabledAccessory.UUID,original.UUID);
+  const enabledAPI=await makeAPI(t);const restored=restore(enabledAPI);
+  const renamed={...config,devices:[{...config.devices[0],name:'Renamed'}]};
+  const enabled=new HTTPPlatform(silentLog,renamed,enabledAPI);enabled.configureAccessory(restored);enabled.discover();
+  assert.equal(enabledAPI.registrations.length,0);assert.equal(enabledAPI.updates[0].UUID,original.UUID);
+  const runtime=sharedRuntime(enabledAPI,silentLog);await runtime.refresh([...runtime.entries.values()][0]);
+  const on=restored.getService(enabledAPI.hap.Service.Switch).getCharacteristic(enabledAPI.hap.Characteristic.On);
+  assert.equal(await on.handleGetRequest(),true);await on.handleSetRequest(false);
+  assert.equal(server.requests.filter(req=>req.url==='/set/false').length,1);
+  enabledAPI.emit('shutdown');
+  for(const overrides of [{enabled:'false',devices:[]},{devices:[{name:'Invalid',service:'Missing'}]},{coordinator:{concurrency:0},devices:[]}]){
+    const api=await makeAPI(t);const accessory=restore(api);const platform=new HTTPPlatform(silentLog,{...config,...overrides},api);
+    platform.configureAccessory(accessory);platform.discover();assert.equal(api.removals.length,0);
+    await assert.rejects(accessory.getService(api.hap.Service.Switch).getCharacteristic(api.hap.Characteristic.On).handleSetRequest(false));
+  }
+  const emptyAPI=await makeAPI(t);const empty=new HTTPPlatform(silentLog,{...config,devices:[]},emptyAPI);
+  empty.configureAccessory(restore(emptyAPI));empty.discover();assert.equal(emptyAPI.removals.length,1);
+  assert.equal(emptyAPI.removals[0].UUID,original.UUID);
+});

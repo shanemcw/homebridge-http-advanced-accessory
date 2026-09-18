@@ -1,23 +1,23 @@
-import { mapValue } from './mappers.js';
+import { mapResponse, mapValue } from './mappers.js';
 import { interpolateLegacy } from './compatibility.js';
 import { ActionError, type ActionConfig, type DeviceConfig, type ErrorCategory, type State } from './types.js';
 import { Transport } from './transport.js';
 
 export class Actions {
   constructor(readonly transport: Transport) {}
-  async get(action: ActionConfig, config: DeviceConfig, owner: string, state: State, seen = new Set<ActionConfig>(), onFailure?: (category: ErrorCategory) => void): Promise<unknown> {
+  async get(action: ActionConfig, config: DeviceConfig, owner: string, state: State, seen = new Set<ActionConfig>(), onFailure?: (category: ErrorCategory, retryAfter?: number) => void): Promise<unknown> {
     if (seen.has(action) || seen.size >= 32) throw new ActionError('inconclusive');
     seen.add(action);
     let body: string;
     try { body = (await this.transport.request(action, config, owner)).body; }
     catch (error) {
-      if (error instanceof ActionError && error.category !== 'aborted' && action.resultOnError != null) {
-        onFailure?.(error.category);
+      if (error instanceof ActionError && !['aborted', 'deferred'].includes(error.category) && action.resultOnError != null) {
+        onFailure?.(error.category, error.retryAfter);
         return action.resultOnError;
       }
       throw error;
     }
-    const value = mapValue(action.mappers, body, state);
+    const value = mapResponse(action.mappers, body, state, action.requireResponseMatch);
     if (value === 'inconclusive') {
       if (action.inconclusive) return this.get(action.inconclusive, config, owner, state, seen, onFailure);
       // published 1.3.0 returned this sentinel; callers validate it for the HAP format

@@ -18,6 +18,8 @@ export interface ActionConfig {
   inconclusive?: ActionConfig;
   timeout?: number;
   strictHTTP?: boolean;
+  responsePattern?: string;
+  requireResponseMatch?: boolean;
 }
 export interface RefreshConfig {
   activeInterval?: number;
@@ -39,6 +41,7 @@ export interface DeviceConfig {
   props?: Record<string, Partial<CharacteristicProps>>;
   forceRefreshDelay?: number;
   setterDelay?: number;
+  writeConfirmationTimeout?: number;
   uriCallsDelay?: number;
   refresh?: RefreshConfig;
   urls?: Record<string, ActionConfig>;
@@ -48,9 +51,9 @@ export interface CoordinatorConfig {
   perOrigin?: number;
   maxQueue?: number;
 }
-export type ErrorCategory = 'config' | 'network' | 'timeout' | 'aborted' | 'http' | 'mapper' | 'inconclusive' | 'queue';
+export type ErrorCategory = 'config' | 'network' | 'timeout' | 'aborted' | 'deferred' | 'http' | 'unavailable' | 'mapper' | 'inconclusive' | 'queue';
 export class ActionError extends Error {
-  constructor(public readonly category: ErrorCategory) {
+  constructor(public readonly category: ErrorCategory, public readonly retryAfter?: number) {
     super(`HTTP Advanced ${category} failure`);
   }
 }
@@ -71,6 +74,12 @@ export interface CacheEntry {
   lastError?: ErrorCategory;
   nextEligible: number;
   generation: number;
+  pendingWrite?: PendingWrite;
   convert: (value: unknown) => CharacteristicValue;
-  update: (value: CharacteristicValue) => void;
+  update: (value: CharacteristicValue | Error) => void;
+}
+export interface PendingWrite {
+  value: CharacteristicValue;
+  // no deadline until the debounced HTTP operation has completed
+  expires?: number;
 }

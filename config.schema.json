@@ -1,15 +1,114 @@
 {
-  "pluginAlias": "HttpAdvanced",
-  "pluginType": "platform",
-  "singular": true,
+  "pluginAlias": "HttpAdvancedAccessory",
+  "pluginType": "accessory",
+  "singular": false,
   "strictValidation": false,
   "schema": {
     "type": "object",
     "required": [
       "name",
-      "devices"
+      "service"
     ],
     "additionalProperties": true,
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Stable platform identity; set before pairing"
+      },
+      "name": {
+        "type": "string"
+      },
+      "service": {
+        "type": "string",
+        "default": "Switch"
+      },
+      "manufacturer": {
+        "type": "string"
+      },
+      "model": {
+        "type": "string"
+      },
+      "username": {
+        "type": "string"
+      },
+      "password": {
+        "type": "string",
+        "format": "password"
+      },
+      "immediately": {
+        "type": "boolean",
+        "default": true
+      },
+      "debug": {
+        "type": "boolean",
+        "default": false
+      },
+      "optionCharacteristic": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "props": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "forceRefreshDelay": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Legacy polling interval in seconds; 0 selects adaptive refresh"
+      },
+      "setterDelay": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Legacy debounce in milliseconds"
+      },
+      "uriCallsDelay": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Minimum milliseconds between request starts for this device"
+      },
+      "refresh": {
+        "type": "object",
+        "properties": {
+          "activeInterval": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 5
+          },
+          "idleInterval": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 60
+          },
+          "idleAfter": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 60
+          }
+        },
+        "description": "All intervals are in seconds"
+      },
+      "urls": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/definitions/action"
+        },
+        "description": "Complete action definitions, including encoded URLs, templates, recursive fallbacks and arbitrary mapper parameters"
+      },
+      "accessory": {
+        "type": "string",
+        "default": "HttpAdvancedAccessory"
+      },
+      "writeConfirmationTimeout": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Milliseconds to hold a requested value while confirming it after HTTP success; default 10000, 0 disables the confirmation window"
+      }
+    },
     "definitions": {
       "action": {
         "type": "object",
@@ -28,6 +127,15 @@
           },
           "body": {
             "type": "string"
+          },
+          "responsePattern": {
+            "type": "string",
+            "description": "Optional regular expression that the raw response body must match before accepting a read or write; mismatch retains cached state or an explicit resultOnError fallback and fails writes without replay"
+          },
+          "requireResponseMatch": {
+            "type": "boolean",
+            "default": false,
+            "description": "Reject unmatched getter extractions unless a later mapper explicitly handles them; leave off to preserve legacy missing-match pass-through"
           },
           "headers": {
             "type": "object",
@@ -74,7 +182,7 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "default": 10000,
-            "description": "Total request timeout in milliseconds, including queue and redirects"
+            "description": "Request timeout in milliseconds including response body and redirects; initial queue wait is excluded for background reads and included for control writes"
           },
           "strictHTTP": {
             "type": "boolean",
@@ -84,138 +192,257 @@
             "$ref": "#/definitions/action"
           }
         }
-      }
-    },
-    "properties": {
-      "name": {
-        "type": "string",
-        "default": "HTTP Advanced"
       },
       "platform": {
-        "type": "string",
-        "default": "HttpAdvanced"
-      },
-      "coordinator": {
         "type": "object",
+        "required": [
+          "name",
+          "devices"
+        ],
+        "additionalProperties": true,
         "properties": {
-          "concurrency": {
-            "type": "integer",
-            "minimum": 1,
-            "default": 4
+          "name": {
+            "type": "string",
+            "default": "HTTP Advanced"
           },
-          "perOrigin": {
-            "type": "integer",
-            "minimum": 1,
-            "default": 2
+          "platform": {
+            "type": "string",
+            "default": "HttpAdvanced"
           },
-          "maxQueue": {
-            "type": "integer",
-            "minimum": 1,
-            "default": 256
+          "coordinator": {
+            "type": "object",
+            "properties": {
+              "concurrency": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 4
+              },
+              "perOrigin": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 2
+              },
+              "maxQueue": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 256
+              }
+            }
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "service"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Stable platform identity; set before pairing"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "service": {
+                  "type": "string",
+                  "default": "Switch"
+                },
+                "manufacturer": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string",
+                  "format": "password"
+                },
+                "immediately": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "debug": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "optionCharacteristic": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "props": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "forceRefreshDelay": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Legacy polling interval in seconds; 0 selects adaptive refresh"
+                },
+                "setterDelay": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Legacy debounce in milliseconds"
+                },
+                "uriCallsDelay": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Minimum milliseconds between request starts for this device"
+                },
+                "refresh": {
+                  "type": "object",
+                  "properties": {
+                    "activeInterval": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "default": 5
+                    },
+                    "idleInterval": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "default": 60
+                    },
+                    "idleAfter": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "default": 60
+                    }
+                  },
+                  "description": "All intervals are in seconds"
+                },
+                "urls": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/action"
+                  },
+                  "description": "Complete action definitions, including encoded URLs, templates, recursive fallbacks and arbitrary mapper parameters"
+                },
+                "accessory": {
+                  "type": "string",
+                  "default": "HttpAdvancedAccessory"
+                },
+                "writeConfirmationTimeout": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Milliseconds to hold a requested value while confirming it after HTTP success; default 10000, 0 disables the confirmation window"
+                }
+              }
+            }
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable this platform; after restart, disabling retains device definitions and cached identities but reports devices unavailable"
           }
         }
       },
-      "devices": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "required": [
-            "name",
-            "service"
-          ],
-          "additionalProperties": true,
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "Stable platform identity; set before pairing"
-            },
-            "name": {
-              "type": "string"
-            },
-            "service": {
-              "type": "string",
-              "default": "Switch"
-            },
-            "manufacturer": {
-              "type": "string"
-            },
-            "model": {
-              "type": "string"
-            },
-            "username": {
-              "type": "string"
-            },
-            "password": {
-              "type": "string",
-              "format": "password"
-            },
-            "immediately": {
-              "type": "boolean",
-              "default": true
-            },
-            "debug": {
-              "type": "boolean",
-              "default": false
-            },
-            "optionCharacteristic": {
-              "type": "array",
-              "items": {
-                "type": "string"
+      "globalSettings": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "requestTimeout": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 10000,
+            "title": "Request timeout (milliseconds)"
+          },
+          "uriCallsDelay": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "title": "Request spacing per device (milliseconds)"
+          },
+          "setterDelay": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "title": "Setter debounce (milliseconds)"
+          },
+          "refresh": {
+            "type": "object",
+            "properties": {
+              "activeInterval": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "default": 5
+              },
+              "idleInterval": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "default": 60
+              },
+              "idleAfter": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "default": 60
               }
             },
-            "props": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object",
-                "additionalProperties": true
+            "description": "All intervals are in seconds"
+          },
+          "coordinator": {
+            "type": "object",
+            "properties": {
+              "concurrency": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 4
+              },
+              "perOrigin": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 2
+              },
+              "maxQueue": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 256
               }
-            },
-            "forceRefreshDelay": {
-              "type": "number",
-              "minimum": 0,
-              "description": "Legacy polling interval in seconds; 0 selects adaptive refresh"
-            },
-            "setterDelay": {
-              "type": "number",
-              "minimum": 0,
-              "description": "Legacy debounce in milliseconds"
-            },
-            "uriCallsDelay": {
-              "type": "number",
-              "minimum": 0,
-              "description": "Minimum milliseconds between request starts for this device"
-            },
-            "refresh": {
-              "type": "object",
-              "properties": {
-                "activeInterval": {
-                  "type": "number",
-                  "exclusiveMinimum": 0,
-                  "default": 5
-                },
-                "idleInterval": {
-                  "type": "number",
-                  "exclusiveMinimum": 0,
-                  "default": 60
-                },
-                "idleAfter": {
-                  "type": "number",
-                  "exclusiveMinimum": 0,
-                  "default": 60
-                }
-              },
-              "description": "All intervals are in seconds"
-            },
-            "urls": {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/definitions/action"
-              },
-              "description": "Action-name map. Keep advanced recursive actions in the Homebridge JSON editor."
             }
+          },
+          "recovery": {
+            "type": "object",
+            "properties": {
+              "retryInterval": {
+                "type": "number",
+                "minimum": 0,
+                "default": 5
+              },
+              "maxRetryInterval": {
+                "type": "number",
+                "minimum": 0,
+                "default": 30
+              },
+              "quietPeriod": {
+                "type": "number",
+                "minimum": 0,
+                "default": 90
+              },
+              "reminderInterval": {
+                "type": "number",
+                "minimum": 0,
+                "default": 300
+              }
+            },
+            "description": "All recovery intervals are in seconds"
+          },
+          "writeConfirmationTimeout": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Milliseconds to hold a requested value while confirming it after HTTP success; default 10000, 0 disables the confirmation window"
           }
         }
       }
     }
-  }
+  },
+  "customUi": true
 }

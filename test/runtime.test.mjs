@@ -36,11 +36,17 @@ test('forceRefreshDelay seconds are respected by demand; default demand activate
   assert.equal(runtime.interval(entry),60000);runtime.read(entry);assert.equal(runtime.interval(entry),5000);
 });
 test('failed requests back off, stale reads preserve last good state and do not bypass backoff',async t=>{
+  t.mock.timers.enable({apis:['Date'],now:Date.now()});
   let fail=false;
   const server=await fakeServer(t,(_req,res)=>{if(fail)res.destroy();else res.end('0');});
   const {runtime,entry}=await device(t,{urls:{getOn:{url:server.url}}});
   await runtime.refresh(entry);fail=true;
   await runtime.refresh(entry); const first=entry.nextEligible-Date.now();
+  await until(()=>runtime.coordinator.active.size===0);
+  const before=server.requests.length;
+  await runtime.refresh(entry);
+  assert.equal(server.requests.length,before);assert.equal(entry.failures,1);
+  t.mock.timers.tick(first+1);
   await runtime.refresh(entry); const second=entry.nextEligible-Date.now();
   assert.ok(second>first*1.5);const next=entry.nextEligible;
   assert.equal(runtime.read(entry),false);assert.equal(entry.nextEligible,next);
@@ -58,7 +64,7 @@ test('persistence restores false values and timestamps, excludes credentials, re
   writeFileSync(cacheFile,'broken');
   const corrupt=await device(t,config,{},dir);assert.equal(corrupt.entry.known,false);
 });
-test('setterDelay acknowledges promptly and sends only last write; failures retain cached state',async t=>{
+test('setterDelay acknowledges promptly and sends only last write while holding the requested state',async t=>{
   const server=await fakeServer(t,(req,res)=>req.url.startsWith('/set')?res.end('ok'):res.end('0'));
   const {runtime,entry,characteristic}=await device(t,{setterDelay:60,urls:{getOn:{url:server.url},setOn:{url:server.url+'/set/{value}'}}});
   let resolveWrite;
@@ -69,7 +75,7 @@ test('setterDelay acknowledges promptly and sends only last write; failures reta
   const before=Date.now();await characteristic.handleSetRequest(true);await characteristic.handleSetRequest(false);await characteristic.handleSetRequest(true);
   assert.ok(Date.now()-before<50);assert.equal(server.requests.length,1);
   await written;assert.equal(server.requests.length,2);assert.equal(server.requests[1].url,'/set/true');
-  assert.equal(entry.value,false);await runtime.refresh(entry);assert.equal(characteristic.value,false);
+  assert.equal(entry.value,false);assert.equal(runtime.read(entry),true);await runtime.refresh(entry);assert.equal(characteristic.value,true);
 });
 test('GET completion that predates SET cannot overwrite current cache',async t=>{
   let release;let response='0';
