@@ -1,4 +1,4 @@
-> Historical 1.3.0 feature reference and examples. For Alpha installation, runtime requirements, cache behavior and corrected documentation, use the root README. Examples are retained as compatibility reference; this document does not override Alpha guidance.
+> Historical 1.3.0 feature reference and examples, with example syntax corrections. For Alpha installation, runtime requirements and cache behavior, use the root README. Examples are retained as compatibility reference; this document does not override Alpha guidance.
 
 # homebridge http advanced accessory
 
@@ -139,19 +139,19 @@ For example, to get the value of the SecuritySystemTargetState Characteristic, t
 
 ### Getter Action
 
-The value object has the following JSON format for a **getter** action:
+The following example belongs inside the accessory's `urls` object and defines a **getter** action:
 
 ```json
-"getTargetTemperature" : {
-    "url":"http://",
-    "httpMethod":"",
-    "body" : "",
-    "mappers" : [],
-    "inconclusive" : {
-        "url":"",
-        "httpMethods":"",
+{
+    "getTargetTemperature": {
+        "url": "http://device.example/temperature",
+        "httpMethod": "GET",
         "mappers": [],
-        "inconclusive":{}
+        "inconclusive": {
+            "url": "http://device.example/temperature/fallback",
+            "httpMethod": "GET",
+            "mappers": []
+        }
     }
 }
 ```
@@ -167,14 +167,16 @@ Where:
 
 ### Setter Action
 
-The value object has the following JSON format for a **setter** action:
+The following example belongs inside the accessory's `urls` object and defines a **setter** action:
 
 ```json
-"setTargetTemperature" : {
-    "url":"http://remoteserver/setTemperature?stemp={value}",
-    "httpMethod":"",
-    "body" : "{value}",
-    "mappers" : []
+{
+    "setTargetTemperature": {
+        "url": "http://device.example/setTemperature?stemp={value}",
+        "httpMethod": "POST",
+        "body": "{value}",
+        "mappers": []
+    }
 }
 ```
 
@@ -187,13 +189,15 @@ Where:
 
 ### URL Template
 
-The URL can be a [string template](<http://exploringjs.com/es6/ch_template-literals.html>) so you can use expressions like *$(state.getCurrentTemperature)* that will be replaced by the current value of the Characteristic CurrentTemperature.
+The URL can be a [string template](<http://exploringjs.com/es6/ch_template-literals.html>) so you can use expressions like `${state.getCurrentTemperature}` that will be replaced by the current value of the Characteristic CurrentTemperature.
 The *state* variable contains all the values of the Characteristics of the Service, plus the *value* variable contains the value HK wants to set for the Characteristic being set.
 For example, suppose that when setting the Active state of a HeatingCooling system it also needs to set the TargetTemperature in Fahrenheit—you may have something like this:
 
 ```json
-"setActive" : {
-    "url":"http://remoteserver/setActive?${value}&stemp=${state.getTargetTemperature * 9/5 +32}"
+{
+    "setActive": {
+        "url": "http://device.example/setActive?${value}&stemp=${state.getTargetTemperature * 9/5 +32}"
+    }
 }
 ```
 
@@ -203,16 +207,18 @@ For example, suppose that when setting the Active state of a HeatingCooling syst
 
 The mappings block of the configuration may contain any number of mapper definitions. The mappers are chained after each other—the result of a mapper is fed into the input of the next mapper. The purpose of this whole chain is to somehow boil down the response received from the API to a single value which is expected by HomeKit.
 
-Each mapper has the following JSON format:
+Each mapper has a `type` and a `parameters` object. For example:
 
 ```json
 {
-    "type": "<type of the mapper>",
-    "parameters": { <parameters to be passed to the mapper> }
+    "type": "static",
+    "parameters": {
+        "mapping": { "ON": "1", "OFF": "0" }
+    }
 }
 ```
 
-There are 3 kinds of mappers implemented at the moment.
+There are five mapper types: static, regex, XPath, JSONPath and eval.
 
 #### Static mapper
 
@@ -312,7 +318,7 @@ Let's assume this mapper gets the following input:
         "partition": [
             "ARMED",
             "ARMED",
-            "ARMED_IMMEDIATE",
+            "ARMED_IMMEDIATE"
         ]
     }
 }
