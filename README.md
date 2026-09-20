@@ -123,16 +123,19 @@ Request timeout, request spacing, debounce and write confirmation are **millisec
 | Allow a slow background HTTP response more time | Increase `requestTimeout`; an individual action's `timeout` overrides it. This does not extend HomeKit's own request budget. |
 | Space requests to an older server | Increase `uriCallsDelay`, or reduce the shared `coordinator.perOrigin` limit. |
 | Allow the server more time to reflect a successful command | Adjust `writeConfirmationTimeout`; the default is 10000 ms after HTTP success. |
-| Combine a burst of changes into the last command | Set `setterDelay` to a positive debounce delay. |
+| Combine rapid target-value changes, such as a brightness slider | Set `setterDelay` to a positive debounce delay. |
+| Preserve individual commands, such as repeated volume-up presses | Set the device's `setterDelay` to `0`, including when a positive shared default is configured. |
 | Balance freshness with background traffic | Adjust `refresh.activeInterval` and `refresh.idleInterval`, or retain a device's explicit `forceRefreshDelay`. |
 
 Shared defaults also apply to legacy child bridges. [The technical reference](docs/modernization.md#shared-settings-and-precedence) covers precedence, units and scheduling boundaries.
+
+Use this plugin for devices or gateways whose integration is HTTP. A working dedicated integration can continue handling its devices. HTTP interfaces vary: some accept target values and report state; others only accept commands. An accepted HTTP request alone does not confirm the physical result. Current debounce settings apply per device; a per-action command mode is not yet implemented.
 
 ### What to expect in Apple Home
 
 Device reads return the latest known state promptly. Background HTTP requests refresh it independently, so a fast HomeKit response can still contain an older observation. On startup, a device without saved or newly acquired state reports a communication error until its first usable response.
 
-When you change a value, the plugin keeps the requested value visible during debounce and the HTTP request, then for up to ten seconds by default while waiting for confirmation. A matching getter response ends that window early. If the command fails or the window expires, HomeKit returns to the latest observed state, or an error if none is known. This handles servers that acknowledge a command before reporting its new state. Failed commands are never automatically replayed.
+For a characteristic with a configured getter, when you change a value the plugin keeps the requested value visible during debounce and the HTTP request, then for up to ten seconds by default while waiting for confirmation. A matching getter response ends that window early. If the command fails or the window expires, HomeKit returns to the latest observed state, or an error if none is known. This handles servers that acknowledge a command before reporting its new state. A setter without a getter has no observed-state confirmation through this mechanism. Failed commands are never automatically replayed.
 
 During a temporary outage, the plugin retries background reads with backoff and keeps known state available, unless your configuration explicitly supplies an error fallback. Short interruptions stay quiet in normal logs. Default outage warnings start after 90 seconds, with reminders at most every five minutes. Recovery can continue beyond 30 seconds; the plugin does not require a gateway upgrade or special retry headers.
 

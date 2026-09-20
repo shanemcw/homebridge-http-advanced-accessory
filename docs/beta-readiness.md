@@ -8,7 +8,7 @@ Checkpoint: 2026-09-18. The preserved `2.0.0-alpha.5` baseline was deployed on 2
 | Recovery | Queued writes expire without later transmission. Paused background reads release queue capacity without fabricating fallback state. A 40-device outage test checks healthy-origin progress, one command during recovery and bounded resumption. | Field outage longer than 30 seconds, command/confirmation behavior, log volume and a sustained recovery/soak run. |
 | Settings | Action/device/global precedence and explicit zero overrides are tested. Separate processes load shared defaults through Homebridge's storage API and isolate platform coordinator overrides. The existing multiple-platform discovery-order rule is documented. | Confirm the actual managed child bridge loads the intended settings after restart. |
 | Release plumbing | Alpha/Beta version/tag guard tests pass; startup version comes from package metadata; both registration aliases share that module. | Final candidate diff, package and authorized CI before Beta.1. No stable/latest publication. |
-| Maintainer readiness | User guide, migration boundaries and detailed timing/lifecycle references reconciled; registration duplication removed. Legacy mapper behavior remains deliberately isolated for compatibility. | Review field evidence and prepare the maintainer announcement at Beta.1. |
+| Maintainer readiness | User guide, migration boundaries and detailed timing/lifecycle references reconciled; registration duplication removed. Legacy mapper behavior remains deliberately isolated for compatibility. | Invite design feedback on the current proposal and coordinate with #55; release acceptance remains separate from the adoption discussion. |
 
 ## Local verification
 
@@ -27,3 +27,9 @@ The preparation candidate passes the full local Node 22/24 × Homebridge 1/2 mat
 5. Verify the backup and rollback path. Review the final package and run CI on the authorized review commit before promoting to Beta.1.
 
 The successful baseline deployment and usage provide continuity evidence. Managed-child-bridge lifecycle coverage, controlled outage/soak measurements and a restore rehearsal remain distinct acceptance items. The preparation branch also needs review of its redirect behavior change and the final candidate diff. Choose a new prerelease version before deployment or publication; retain the Alpha.5 tag unchanged.
+
+## Planned HTTP command follow-up — 2026-09-19
+
+The next proposed addition distinguishes individual commands from target-value writes at the action level. It keeps existing defaults and configuration valid, preserves each admitted command without debounce or automatic replay, and uses real feedback for state confirmation. It applies to HTTP integrations across device types. Working dedicated integrations remain outside this scope.
+
+The [HTTP action proposal](http-command-proposal.md) connects this work to #55, records current behavior and sets implementation and validation milestones. It is a plan, not an implemented feature or a claim to cover all of #55. Custom IR services, complete TV support and older runtime support are separate decisions. Maintainer feedback can begin now; if this addition enters a release candidate, its acceptance checks must pass alongside the field gates above.
